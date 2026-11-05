@@ -449,21 +449,6 @@ if not st.session_state.user:
 
             st.markdown('<div class="login-separator"></div>', unsafe_allow_html=True)
 
-            with st.expander("Guest / Other Users Login", expanded=st.session_state.login_mode == "admin"):
-                st.caption("Administrator access for authorised accounts.")
-                with st.form("admin_login_form"):
-                    admin_email = st.text_input("Email address", key="admin_login_email")
-                    admin_password = st.text_input("Password", type="password", key="admin_login_password")
-                    admin_go = st.form_submit_button("Continue", type="primary", use_container_width=True)
-                if admin_go:
-                    admin_user = one("SELECT * FROM users WHERE email=?", (admin_email.lower().strip(),))
-                    if admin_user is not None and admin_user["role"] == "admin" and verify_password(admin_password,admin_user["salt"],admin_user["password_hash"]):
-                        st.session_state.user = dict(admin_user)
-                        log_action(admin_user["id"],"LOGIN","Administrator sign in")
-                        st.rerun()
-                    else:
-                        st.error("These credentials do not match an authorised administrator account.")
-
             if st.session_state.login_mode in ("student", "faculty"):
                 selected_role = st.session_state.login_mode
                 selected_label = "MUJ Student" if selected_role == "student" else "MUJ Faculty"
