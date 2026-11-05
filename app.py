@@ -650,7 +650,7 @@ elif page == "My activity":
                     if r["identification_mark"]:
                         st.write(f"Identification mark: {r['identification_mark']}")
                 with b: st.write(f"**{r['status']}**")
-                if is_admin or r["status"]=="Open":
+                if is_admin:
                     if st.button("Mark resolved / closed",key=f"close_{r['id']}"):
                         with get_conn() as c: c.execute("UPDATE items SET status='Resolved' WHERE id=? AND user_id=?",(r["id"],uid))
                         log_action(uid,"ITEM_RESOLVED",f"Item #{r['id']}")
