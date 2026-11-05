@@ -203,7 +203,23 @@ def inject_css():
  
     [data-testid="stFileUploaderDropzone"] {background:var(--o50); border:1.5px dashed var(--o200); border-radius:var(--radius);}
     [data-testid="stFileUploaderDropzone"] * {color:var(--ink) !important;}
-    [data-testid="stFileUploaderDropzone"] button {background:#fff; border:1px solid var(--o200); color:var(--o700) !important;}
+    [data-testid="stFileUploaderDropzone"] button {background:#fff !important; border:1px solid var(--o200) !important; color:var(--o700) !important;}
+    [data-testid="stFileUploaderDropzone"] button [data-testid="stIconMaterial"] {
+      display:none !important;
+    }
+    [data-testid="stFileUploaderDropzone"] button span {
+      color:var(--o700) !important; -webkit-text-fill-color:var(--o700) !important;
+    }
+    [data-testid="stDateInput"] input,
+    [data-testid="stDateInput"] [data-baseweb="input"],
+    [data-testid="stDateInput"] [data-baseweb="datepicker"] {
+      background:#fff !important; color:var(--ink) !important;
+    }
+    [data-testid="stDateInput"] svg {color:var(--o600) !important; fill:var(--o600) !important;}
+    [data-testid="stSelectbox"] [data-baseweb="select"] > div,
+    [data-testid="stMultiSelect"] [data-baseweb="select"] > div {
+      background:#fff !important; color:var(--ink) !important;
+    }
  
     /* ---------- Buttons ---------- */
     .stButton button, .stFormSubmitButton button, .stDownloadButton button {
