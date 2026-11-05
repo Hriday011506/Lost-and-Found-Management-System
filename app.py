@@ -4,6 +4,8 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
+from html import escape
 import hashlib
 import hmac
 import secrets
@@ -418,7 +420,12 @@ uid = user["id"]
 is_admin = user["role"]=="admin"
 
 if page == "Overview":
-    st.markdown(f'<div class="hero"><h1>Good to see you, {user["name"].split()[0]}.</h1><p>Your campus lost and found workspace. Keep every report and claim in one place.</p></div>', unsafe_allow_html=True)
+    local_hour = datetime.now(ZoneInfo("Asia/Kolkata")).hour
+    time_greeting = "Good morning" if 5 <= local_hour < 12 else "Good afternoon" if 12 <= local_hour < 17 else "Good evening"
+    display_name = "Admin" if is_admin else escape(user["name"].strip().split()[0])
+    welcome_line = f"{time_greeting}, {display_name}."
+    welcome_copy = "Here is your administration overview. Review campus reports, monitor claims and keep the service running smoothly." if is_admin else "Welcome to your campus lost and found workspace. Keep track of reports, discover found items and follow your claims."
+    st.markdown(f'<div class="hero"><h1>{welcome_line}</h1><p>{welcome_copy}</p></div>', unsafe_allow_html=True)
     total = one("SELECT COUNT(*) n FROM items")["n"]
     lost = one("SELECT COUNT(*) n FROM items WHERE report_type='Lost' AND status='Open'")["n"]
     found = one("SELECT COUNT(*) n FROM items WHERE report_type='Found' AND status='Open'")["n"]
