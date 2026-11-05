@@ -691,10 +691,10 @@ elif page in ("My claims","Claims & verification"):
                 for msg in conversation:
                     st.caption(f"{msg['name']} · {msg['role'].title()} · {msg['created_at']}")
                     st.write(msg["comment"])
-            if not is_admin and r["status"]=="Rejected":
+            if not is_admin and r["status"]=="Needs info":
                 with st.form(f"followup_{r['id']}"):
                     reply=st.text_area("Provide the additional information requested by the administrator",placeholder="Add more ownership details or evidence...")
-                    send=st.form_submit_button("Submit follow-up",type="primary")
+                    send=st.form_submit_button("Submit requested information",type="primary")
                 if send:
                     if len(reply.strip())<10:
                         st.error("Please provide at least 10 characters of additional information.")
@@ -703,14 +703,14 @@ elif page in ("My claims","Claims & verification"):
                             c.execute("INSERT INTO claim_comments(claim_id,author_id,comment,created_at) VALUES(?,?,?,?)",
                                       (r["id"],uid,reply.strip(),datetime.now().isoformat(timespec="seconds")))
                             c.execute("UPDATE claims SET status='Pending',admin_note='' WHERE id=?",(r["id"],))
-                        log_action(uid,"CLAIM_FOLLOWUP",f"Follow-up submitted for claim #{r['id']}")
-                        st.success("Your follow-up has been sent to the administrator for review.")
+                        log_action(uid,"CLAIM_FOLLOWUP",f"Requested information submitted for claim #{r['id']}")
+                        st.success("Your information has been sent to the administrator for review.")
                         st.rerun()
             if is_admin and r["status"]=="Pending":
-                note=st.text_area("Administrator comment (required)",key=f"note_{r['id']}",placeholder="Explain the decision or specify what information is still needed...")
-                x,y=st.columns(2)
+                note=st.text_area("Administrator comment (required)",key=f"note_{r['id']}",placeholder="Explain the decision or specify what information is needed...")
+                x,y,z=st.columns(3)
                 with x:
-                    if st.button("Approve claim",key=f"approve_{r['id']}",type="primary",use_container_width=True):
+                    if st.button("Approve",key=f"approve_{r['id']}",type="primary",use_container_width=True):
                         if not note.strip():
                             st.error("Please add a comment before approving.")
                         else:
@@ -722,9 +722,20 @@ elif page in ("My claims","Claims & verification"):
                             log_action(uid,"CLAIM_APPROVED",f"Claim #{r['id']}")
                             st.rerun()
                 with y:
-                    if st.button("Reject claim",key=f"reject_{r['id']}",use_container_width=True):
+                    if st.button("Request info",key=f"request_info_{r['id']}",use_container_width=True):
                         if not note.strip():
-                            st.error("Please add a comment explaining why the claim is rejected and what is needed.")
+                            st.error("Please explain what information the student must provide.")
+                        else:
+                            with get_conn() as c:
+                                c.execute("UPDATE claims SET status='Needs info',admin_note=? WHERE id=?",(note.strip(),r["id"]))
+                                c.execute("INSERT INTO claim_comments(claim_id,author_id,comment,created_at) VALUES(?,?,?,?)",
+                                          (r["id"],uid,note.strip(),datetime.now().isoformat(timespec="seconds")))
+                            log_action(uid,"CLAIM_INFO_REQUESTED",f"Additional information requested for claim #{r['id']}")
+                            st.rerun()
+                with z:
+                    if st.button("Reject",key=f"reject_{r['id']}",use_container_width=True):
+                        if not note.strip():
+                            st.error("Please explain why the claim is being rejected.")
                         else:
                             with get_conn() as c:
                                 c.execute("UPDATE claims SET status='Rejected',admin_note=? WHERE id=?",(note.strip(),r["id"]))
