@@ -587,26 +587,31 @@ elif page == "Browse items":
             with b:
                 if r["image_path"] and Path(r["image_path"]).exists(): st.image(r["image_path"],use_container_width=True)
                 if not is_admin and r["user_id"]!=uid and r["report_type"]=="Found":
-                    if st.button("Claim item",key=f"claim_{r['id']}",use_container_width=True):
+                    prior_claim=one("SELECT id FROM claims WHERE item_id=? AND claimant_id=?",(r["id"],uid))
+                    if prior_claim:
+                        st.info("You have already submitted a claim for this item.")
+                    elif st.button("Claim item",key=f"claim_{r['id']}",use_container_width=True):
                         st.session_state[f"claim_item_{r['id']}"]=True
-                if st.session_state.get(f"claim_item_{r['id']}"):
+                if st.session_state.get(f"claim_item_{r['id']}") and not is_admin:
                     with st.form(f"claim_form_{r['id']}"):
                         details=st.text_area("Describe identifying details or proof of ownership")
                         submit=st.form_submit_button("Submit claim")
                     if submit:
-                        if len(details.strip())<20: st.error("Please provide at least 20 characters of useful identifying detail.")
+                        if len(details.strip())<20:
+                            st.error("Please provide at least 20 characters of useful identifying detail.")
                         else:
                             with get_conn() as c:
-                                existing= c.execute("SELECT id FROM claims WHERE item_id=? AND claimant_id=?",(r["id"],uid)).fetchone()
+                                existing=c.execute("SELECT id FROM claims WHERE item_id=? AND claimant_id=?",(r["id"],uid)).fetchone()
                                 if existing:
-                                    st.error("You have already submitted a claim for this item. Only one claim per student is allowed.")
+                                    st.info("You have already submitted a claim for this item.")
+                                    st.session_state[f"claim_item_{r['id']}"]=False
                                 else:
                                     c.execute("INSERT INTO claims(item_id,claimant_id,ownership_details,created_at) VALUES(?,?,?,?)",
                                               (r["id"],uid,details.strip(),datetime.now().isoformat(timespec="seconds")))
-                            log_action(uid,"CLAIM_SUBMITTED",f"Item #{r['id']}")
-                            st.success("Claim submitted for administrator review.")
-                            st.session_state[f"claim_item_{r['id']}"]=False
-                            st.rerun()
+                                    log_action(uid,"CLAIM_SUBMITTED",f"Item #{r['id']}")
+                                    st.success("Claim submitted for administrator review.")
+                                    st.session_state[f"claim_item_{r['id']}"]=False
+                                    st.rerun()
 
 elif page == "Report an item":
     st.markdown('<div class="hero"><h1>Make a report</h1><p>Share clear details so the campus community can help.</p></div>', unsafe_allow_html=True)
