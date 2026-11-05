@@ -56,6 +56,12 @@ def init_db():
           FOREIGN KEY(item_id) REFERENCES items(id),
           FOREIGN KEY(claimant_id) REFERENCES users(id)
         );
+        CREATE TABLE IF NOT EXISTS claim_comments (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, claim_id INTEGER NOT NULL,
+          author_id INTEGER NOT NULL, comment TEXT NOT NULL, created_at TEXT NOT NULL,
+          FOREIGN KEY(claim_id) REFERENCES claims(id),
+          FOREIGN KEY(author_id) REFERENCES users(id)
+        );
         CREATE TABLE IF NOT EXISTS audit_log (
           id INTEGER PRIMARY KEY AUTOINCREMENT, actor_id INTEGER,
           action TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL
@@ -658,38 +664,74 @@ elif page == "My activity":
     else: st.info("You have not submitted any reports yet.")
 
 elif page in ("My claims","Claims & verification"):
-    st.markdown('<div class="hero"><h1>Claims & verification</h1><p>Transparent review of ownership submissions.</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero"><h1>Claims & verification</h1><p>Review ownership claims, exchange additional information and track decisions.</p></div>', unsafe_allow_html=True)
     if is_admin:
         claim_rows=rows("""SELECT c.*,i.item_name,i.report_type,i.location,u.name claimant,u.email
-                           FROM claims c JOIN items i ON c.item_id=i.id JOIN users u ON c.claimant_id=u.id
+                           FROM claims c JOIN items i ON c.item_id=i.id JOIN users u ON i.user_id<>-1 AND u.id=c.claimant_id
                            ORDER BY CASE c.status WHEN 'Pending' THEN 0 ELSE 1 END,c.created_at DESC""")
     else:
         claim_rows=rows("""SELECT c.*,i.item_name,i.report_type,i.location,u.name claimant
-                           FROM claims c JOIN items i ON c.item_id=i.id JOIN users u ON u.id=c.claimant_id
+                           FROM claims c JOIN items i ON i.id=c.item_id JOIN users u ON u.id=c.claimant_id
                            WHERE c.claimant_id=? ORDER BY c.created_at DESC""",(uid,))
-    if not claim_rows: st.info("No claims to display.")
+    if not claim_rows:
+        st.info("No claims to display.")
     for r in claim_rows:
         with st.container(border=True):
             st.markdown(f"**Claim #{r['id']} · {r['item_name']}**")
-            st.caption(f"Item #{r['item_id']} • {r['location']} • {r['status']}")
+            st.caption(f"Item #{r['item_id']} • {r['location']} • Status: {r['status']}")
+            st.write("**Original ownership details**")
             st.write(r["ownership_details"])
+            if r["admin_note"]:
+                st.info(f"Administrator decision note: {r['admin_note']}")
+            conversation=rows("""SELECT cc.comment,cc.created_at,u.name,u.role
+                                 FROM claim_comments cc JOIN users u ON u.id=cc.author_id
+                                 WHERE cc.claim_id=? ORDER BY cc.created_at""",(r["id"],))
+            if conversation:
+                st.markdown("**Follow-up discussion**")
+                for msg in conversation:
+                    st.caption(f"{msg['name']} · {msg['role'].title()} · {msg['created_at']}")
+                    st.write(msg["comment"])
+            if not is_admin and r["status"]=="Rejected":
+                with st.form(f"followup_{r['id']}"):
+                    reply=st.text_area("Provide the additional information requested by the administrator",placeholder="Add more ownership details or evidence...")
+                    send=st.form_submit_button("Submit follow-up",type="primary")
+                if send:
+                    if len(reply.strip())<10:
+                        st.error("Please provide at least 10 characters of additional information.")
+                    else:
+                        with get_conn() as c:
+                            c.execute("INSERT INTO claim_comments(claim_id,author_id,comment,created_at) VALUES(?,?,?,?)",
+                                      (r["id"],uid,reply.strip(),datetime.now().isoformat(timespec="seconds")))
+                            c.execute("UPDATE claims SET status='Pending',admin_note='' WHERE id=?",(r["id"],))
+                        log_action(uid,"CLAIM_FOLLOWUP",f"Follow-up submitted for claim #{r['id']}")
+                        st.success("Your follow-up has been sent to the administrator for review.")
+                        st.rerun()
             if is_admin and r["status"]=="Pending":
-                note=st.text_input("Review note (optional)",key=f"note_{r['id']}")
+                note=st.text_area("Administrator comment (required)",key=f"note_{r['id']}",placeholder="Explain the decision or specify what information is still needed...")
                 x,y=st.columns(2)
                 with x:
                     if st.button("Approve claim",key=f"approve_{r['id']}",type="primary",use_container_width=True):
-                        with get_conn() as c:
-                            c.execute("UPDATE claims SET status='Approved',admin_note=? WHERE id=?",(note,r["id"]))
-                            c.execute("UPDATE items SET status='Resolved' WHERE id=?",(r["item_id"],))
-                        log_action(uid,"CLAIM_APPROVED",f"Claim #{r['id']}")
-                        st.rerun()
+                        if not note.strip():
+                            st.error("Please add a comment before approving.")
+                        else:
+                            with get_conn() as c:
+                                c.execute("UPDATE claims SET status='Approved',admin_note=? WHERE id=?",(note.strip(),r["id"]))
+                                c.execute("UPDATE items SET status='Resolved' WHERE id=?",(r["item_id"],))
+                                c.execute("INSERT INTO claim_comments(claim_id,author_id,comment,created_at) VALUES(?,?,?,?)",
+                                          (r["id"],uid,note.strip(),datetime.now().isoformat(timespec="seconds")))
+                            log_action(uid,"CLAIM_APPROVED",f"Claim #{r['id']}")
+                            st.rerun()
                 with y:
                     if st.button("Reject claim",key=f"reject_{r['id']}",use_container_width=True):
-                        with get_conn() as c: c.execute("UPDATE claims SET status='Rejected',admin_note=? WHERE id=?",(note,r["id"]))
-                        log_action(uid,"CLAIM_REJECTED",f"Claim #{r['id']}")
-                        st.rerun()
-            elif r["status"]!="Pending" and r["admin_note"]:
-                st.caption(f"Administrator note: {r['admin_note']}")
+                        if not note.strip():
+                            st.error("Please add a comment explaining why the claim is rejected and what is needed.")
+                        else:
+                            with get_conn() as c:
+                                c.execute("UPDATE claims SET status='Rejected',admin_note=? WHERE id=?",(note.strip(),r["id"]))
+                                c.execute("INSERT INTO claim_comments(claim_id,author_id,comment,created_at) VALUES(?,?,?,?)",
+                                          (r["id"],uid,note.strip(),datetime.now().isoformat(timespec="seconds")))
+                            log_action(uid,"CLAIM_REJECTED",f"Claim #{r['id']}")
+                            st.rerun()
 
 elif page == "User directory" and is_admin:
     st.markdown('<div class="hero"><h1>User directory</h1><p>Registered students, faculty and administrators.</p></div>', unsafe_allow_html=True)
