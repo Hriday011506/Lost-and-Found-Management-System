@@ -107,9 +107,31 @@ def inject_css():
       border-radius:7px !important;
     }
     [data-baseweb="select"] > div {background:#ffffff; border-color:#ded6d1; color:#292524;}
-    [data-testid="stTabs"] button {font-weight:600; color:#78716c;}
-    [data-testid="stTabs"] button[aria-selected="true"] {color:#d85f2b !important;}
-    [data-testid="stTabs"] [data-baseweb="tab-highlight"] {background:#d85f2b;}
+    /* Force readable tab labels: Streamlit's default pale text was overriding the theme. */
+    [data-testid="stTabs"] [role="tab"],
+    [data-testid="stTabs"] button,
+    [data-baseweb="tab"] {
+      color:#292524 !important; -webkit-text-fill-color:#292524 !important;
+      opacity:1 !important; font-weight:650 !important; font-size:1.05rem !important;
+    }
+    [data-testid="stTabs"] [role="tab"][aria-selected="true"],
+    [data-testid="stTabs"] button[aria-selected="true"],
+    [data-baseweb="tab"][aria-selected="true"] {
+      color:#d85f2b !important; -webkit-text-fill-color:#d85f2b !important;
+      opacity:1 !important;
+    }
+    [data-testid="stTabs"] [data-baseweb="tab-highlight"] {background:#d85f2b !important;}
+    [data-testid="stTabs"] [data-baseweb="tab-border"] {background:#eee7e3 !important;}
+    /* Keep all form labels, placeholders and captions legible on white. */
+    [data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] *,
+    [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
+    [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p,
+    .stTextInput label, .stTextArea label, .stSelectbox label {
+      color:#292524 !important; opacity:1 !important;
+    }
+    input::placeholder, textarea::placeholder {color:#8a817c !important; opacity:1 !important;}
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] *,
+    [data-testid="stSidebar"] label {color:#292524 !important;}
     .stButton button, .stFormSubmitButton button {border-radius:7px; min-height:2.65rem; font-weight:600;}
     .stButton button[kind="primary"], .stFormSubmitButton button, button[kind="primary"] {
       background:#d85f2b !important; border:1px solid #d85f2b !important; color:#ffffff !important;
