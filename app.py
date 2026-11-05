@@ -690,21 +690,42 @@ elif page in ("My claims","Claims & verification"):
                 st.markdown("**Follow-up discussion**")
                 for msg in conversation:
                     st.caption(f"{msg['name']} · {msg['role'].title()} · {msg['created_at']}")
-                    st.write(msg["comment"])
+                    comment_text=msg["comment"]
+                    photo_marker="[Supporting photograph: "
+                    if photo_marker in comment_text:
+                        before,photo_part=comment_text.split(photo_marker,1)
+                        photo_path=photo_part.split("]",1)[0]
+                        if before.strip():
+                            st.write(before.strip())
+                        if Path(photo_path).exists():
+                            st.image(photo_path,caption="Student-provided claim evidence",width=320)
+                        else:
+                            st.caption("Supporting photograph is unavailable on this server.")
+                    else:
+                        st.write(comment_text)
             if not is_admin and r["status"]=="Needs info":
                 with st.form(f"followup_{r['id']}"):
-                    reply=st.text_area("Provide the additional information requested by the administrator",placeholder="Add more ownership details or evidence...")
-                    send=st.form_submit_button("Submit requested information",type="primary")
+                    reply=st.text_area("Additional information requested by the administrator",placeholder="Add ownership details or explain the evidence...")
+                    evidence_photo=st.file_uploader("Upload supporting photograph (optional)",type=["png","jpg","jpeg"],key=f"claim_evidence_{r['id']}",help="Upload a photo that supports your ownership claim.")
+                    send=st.form_submit_button("Submit information",type="primary")
                 if send:
-                    if len(reply.strip())<10:
-                        st.error("Please provide at least 10 characters of additional information.")
+                    if len(reply.strip())<10 and not evidence_photo:
+                        st.error("Please provide written details or upload a supporting photograph.")
                     else:
+                        evidence_path=None
+                        if evidence_photo:
+                            suffix=Path(evidence_photo.name).suffix.lower()
+                            evidence_path=str(UPLOAD_DIR/f"claim_{r['id']}_{secrets.token_hex(10)}{suffix}")
+                            Path(evidence_path).write_bytes(evidence_photo.getbuffer())
+                        message=reply.strip() or "Supporting photograph uploaded."
+                        if evidence_path:
+                            message += f"\n[Supporting photograph: {evidence_path}]"
                         with get_conn() as c:
                             c.execute("INSERT INTO claim_comments(claim_id,author_id,comment,created_at) VALUES(?,?,?,?)",
-                                      (r["id"],uid,reply.strip(),datetime.now().isoformat(timespec="seconds")))
+                                      (r["id"],uid,message,datetime.now().isoformat(timespec="seconds")))
                             c.execute("UPDATE claims SET status='Pending',admin_note='' WHERE id=?",(r["id"],))
                         log_action(uid,"CLAIM_FOLLOWUP",f"Requested information submitted for claim #{r['id']}")
-                        st.success("Your information has been sent to the administrator for review.")
+                        st.success("Your information and evidence have been sent to the administrator for review.")
                         st.rerun()
             if is_admin and r["status"]=="Pending":
                 note=st.text_area("Administrator comment (required)",key=f"note_{r['id']}",placeholder="Explain the decision or specify what information is needed...")
