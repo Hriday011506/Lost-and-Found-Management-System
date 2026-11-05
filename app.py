@@ -14,6 +14,10 @@ import pandas as pd
 import streamlit as st
 import streamlit as pt
 
+import psycopg2
+from psycopg2 import IntegrityError as PostgresIntegrityError
+from psycopg2.extras import DictCursor
+
 ROOT = Path(__file__).parent
 DB_PATH = ROOT / "lost_found.db"
 UPLOAD_DIR = ROOT / "uploads"
@@ -21,51 +25,108 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 st.set_page_config(page_title="MUJ Lost & Found", page_icon="🔎", layout="wide", initial_sidebar_state="expanded")
 
+class PostgresConnection:
+    """Small compatibility layer so the existing app can use PostgreSQL with minimal SQL changes."""
+    def __init__(self, url):
+        self.raw = psycopg2.connect(url, cursor_factory=DictCursor, connect_timeout=15)
+
+    def execute(self, query, params=()):
+        cursor = self.raw.cursor()
+        cursor.execute(query.replace("?", "%s"), params)
+        return cursor
+
+    def executescript(self, script):
+        cursor = self.raw.cursor()
+        cursor.execute(script)
+        return cursor
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type:
+            self.raw.rollback()
+        else:
+            self.raw.commit()
+        self.raw.close()
+        return False
+
 def get_conn():
+    database_url = st.secrets.get("DATABASE_URL", "")
+    if database_url:
+        return PostgresConnection(database_url)
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 def init_db():
+    database_url = st.secrets.get("DATABASE_URL", "")
     with get_conn() as c:
-        c.executescript("""
-        CREATE TABLE IF NOT EXISTS users (
-          id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
-          email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL,
-          salt TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'student',
-          created_at TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS items (
-          id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
-          report_type TEXT NOT NULL CHECK(report_type IN ('Lost','Found')),
-          item_name TEXT NOT NULL, category TEXT NOT NULL, description TEXT NOT NULL,
-          location TEXT NOT NULL, event_date TEXT NOT NULL, image_path TEXT,
-          identification_mark TEXT DEFAULT '',
-          status TEXT NOT NULL DEFAULT 'Open',
-          created_at TEXT NOT NULL,
-          FOREIGN KEY(user_id) REFERENCES users(id)
-        );
-        CREATE TABLE IF NOT EXISTS claims (
-          id INTEGER PRIMARY KEY AUTOINCREMENT, item_id INTEGER NOT NULL,
-          claimant_id INTEGER NOT NULL, ownership_details TEXT NOT NULL,
-          status TEXT NOT NULL DEFAULT 'Pending', admin_note TEXT DEFAULT '',
-          created_at TEXT NOT NULL,
-          FOREIGN KEY(item_id) REFERENCES items(id),
-          FOREIGN KEY(claimant_id) REFERENCES users(id)
-        );
-        CREATE TABLE IF NOT EXISTS audit_log (
-          id INTEGER PRIMARY KEY AUTOINCREMENT, actor_id INTEGER,
-          action TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL
-        );
-        """)
-        item_columns = {row[1] for row in c.execute("PRAGMA table_info(items)").fetchall()}
-        if "identification_mark" not in item_columns:
-            c.execute("ALTER TABLE items ADD COLUMN identification_mark TEXT DEFAULT ''")
-        # Demo admin is created only when the database is first initialized.
-        # Admin provisioning is intentionally not seeded in the public app.
-        # Create the first administrator locally through the documented bootstrap procedure
-        # before deploying to an approved pilot environment.
+        if database_url:
+            c.executescript("""
+            CREATE TABLE IF NOT EXISTS users (
+              id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL,
+              email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL,
+              salt TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'student',
+              created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS items (
+              id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES users(id),
+              report_type TEXT NOT NULL CHECK(report_type IN ('Lost','Found')),
+              item_name TEXT NOT NULL, category TEXT NOT NULL, description TEXT NOT NULL,
+              location TEXT NOT NULL, event_date TEXT NOT NULL, image_path TEXT,
+              identification_mark TEXT DEFAULT '',
+              status TEXT NOT NULL DEFAULT 'Open',
+              created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS claims (
+              id BIGSERIAL PRIMARY KEY, item_id BIGINT NOT NULL REFERENCES items(id),
+              claimant_id BIGINT NOT NULL REFERENCES users(id), ownership_details TEXT NOT NULL,
+              status TEXT NOT NULL DEFAULT 'Pending', admin_note TEXT DEFAULT '',
+              created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS audit_log (
+              id BIGSERIAL PRIMARY KEY, actor_id BIGINT,
+              action TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL
+            );
+            ALTER TABLE items ADD COLUMN IF NOT EXISTS identification_mark TEXT DEFAULT '';
+            """)
+        else:
+            c.executescript("""
+            CREATE TABLE IF NOT EXISTS users (
+              id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
+              email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL,
+              salt TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'student',
+              created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS items (
+              id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+              report_type TEXT NOT NULL CHECK(report_type IN ('Lost','Found')),
+              item_name TEXT NOT NULL, category TEXT NOT NULL, description TEXT NOT NULL,
+              location TEXT NOT NULL, event_date TEXT NOT NULL, image_path TEXT,
+              identification_mark TEXT DEFAULT '',
+              status TEXT NOT NULL DEFAULT 'Open',
+              created_at TEXT NOT NULL,
+              FOREIGN KEY(user_id) REFERENCES users(id)
+            );
+            CREATE TABLE IF NOT EXISTS claims (
+              id INTEGER PRIMARY KEY AUTOINCREMENT, item_id INTEGER NOT NULL,
+              claimant_id INTEGER NOT NULL, ownership_details TEXT NOT NULL,
+              status TEXT NOT NULL DEFAULT 'Pending', admin_note TEXT DEFAULT '',
+              created_at TEXT NOT NULL,
+              FOREIGN KEY(item_id) REFERENCES items(id),
+              FOREIGN KEY(claimant_id) REFERENCES users(id)
+            );
+            CREATE TABLE IF NOT EXISTS audit_log (
+              id INTEGER PRIMARY KEY AUTOINCREMENT, actor_id INTEGER,
+              action TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL
+            );
+            """)
+            item_columns = {row[1] for row in c.execute("PRAGMA table_info(items)").fetchall()}
+            if "identification_mark" not in item_columns:
+                c.execute("ALTER TABLE items ADD COLUMN identification_mark TEXT DEFAULT ''")
+        # Administrator provisioning remains controlled through Streamlit secrets.
 
 def hash_password(password: str, salt: str) -> str:
     return hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 240000).hex()
@@ -416,7 +477,7 @@ def create_account(name,email,password):
             c.execute("INSERT INTO users(name,email,password_hash,salt,role,created_at) VALUES(?,?,?,?,?,?)",
                       (name,email.lower().strip(),digest,salt,role,datetime.now().isoformat(timespec="seconds")))
         return True
-    except sqlite3.IntegrityError:
+    except (sqlite3.IntegrityError, PostgresIntegrityError):
         return False
 
 init_db()
@@ -614,10 +675,16 @@ elif page == "Report an item":
                 image_path=str(UPLOAD_DIR/f"{secrets.token_hex(12)}{suffix}")
                 Path(image_path).write_bytes(image_file.getbuffer())
             with get_conn() as c:
-                cur=c.execute("""INSERT INTO items(user_id,report_type,item_name,category,description,location,event_date,image_path,identification_mark,created_at)
-                                 VALUES(?,?,?,?,?,?,?,?,?,?)""",
-                              (uid,typ,name.strip(),category,description.strip(),location.strip(),event_date.isoformat(),image_path,identification_mark.strip(),datetime.now().isoformat(timespec="seconds")))
-                item_id=cur.lastrowid
+                if st.secrets.get("DATABASE_URL", ""):
+                    cur=c.execute("""INSERT INTO items(user_id,report_type,item_name,category,description,location,event_date,image_path,identification_mark,created_at)
+                                     VALUES(?,?,?,?,?,?,?,?,?,?) RETURNING id""",
+                                  (uid,typ,name.strip(),category,description.strip(),location.strip(),event_date.isoformat(),image_path,identification_mark.strip(),datetime.now().isoformat(timespec="seconds")))
+                    item_id=cur.fetchone()["id"]
+                else:
+                    cur=c.execute("""INSERT INTO items(user_id,report_type,item_name,category,description,location,event_date,image_path,identification_mark,created_at)
+                                     VALUES(?,?,?,?,?,?,?,?,?,?)""",
+                                  (uid,typ,name.strip(),category,description.strip(),location.strip(),event_date.isoformat(),image_path,identification_mark.strip(),datetime.now().isoformat(timespec="seconds")))
+                    item_id=cur.lastrowid
             log_action(uid,"ITEM_REPORTED",f"{typ} item #{item_id}: {name.strip()}")
             st.success(f"Report #{item_id} submitted and is now visible in Browse items.")
 
