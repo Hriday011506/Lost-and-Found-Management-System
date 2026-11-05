@@ -330,6 +330,19 @@ def inject_css():
     .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"]:has([data-testid="stTabs"]):hover {
       border-color:#fff !important; box-shadow:0 18px 55px rgba(45,25,12,.22) !important;
     }
+    .stApp:has(.login-shell) [data-testid="stButton"] button[kind="primary"] {
+      background:#0874BE !important; border:1px solid #0874BE !important; color:#fff !important;
+      -webkit-text-fill-color:#fff !important; font-size:.88rem !important; font-weight:750 !important;
+      min-height:3.1rem !important; padding:.55rem .65rem !important; border-radius:7px !important;
+      box-shadow:none !important; white-space:normal !important;
+    }
+    .stApp:has(.login-shell) [data-testid="stButton"] button[kind="primary"]:hover {
+      background:#075F9D !important; border-color:#075F9D !important;
+    }
+    .login-separator {height:1px; background:#DDE5EB; margin:1.25rem 0;}
+    .selected-login-label {font-size:.95rem; font-weight:750; color:var(--ink); margin:.8rem 0 .25rem;}
+    .stApp:has(.login-shell) [data-testid="stExpander"] {border:0 !important; border-radius:8px !important;}
+    .stApp:has(.login-shell) [data-testid="stExpander"] summary {font-weight:750; font-size:1rem;}
     .login-panel h2 {font-size:1.42rem; margin:.1rem 0 .3rem; color:var(--ink);}
     .login-panel-intro {color:var(--muted); margin:0 0 .9rem; font-size:.88rem;}
     .login-eyebrow {font-size:.7rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--o700); margin-bottom:.55rem;}
@@ -417,34 +430,65 @@ with st.sidebar:
         page = "Sign in"
 
 if not st.session_state.user:
+    if "login_mode" not in st.session_state:
+        st.session_state.login_mode = None
+
     left, empty_space = st.columns([0.43, 0.57], gap="small")
     with left:
         st.markdown('<div class="login-shell"><div class="login-brand"><div class="login-brand-mark">⌕</div><div><div class="login-brand-name">MUJ Lost &amp; Found</div><div class="login-brand-sub">MANIPAL UNIVERSITY JAIPUR</div></div></div></div>', unsafe_allow_html=True)
         with st.container(border=True):
-            st.markdown('<div class="login-eyebrow">WELCOME TO MUJ LOST &amp; FOUND</div><h2>Find what matters. Return what belongs.</h2><p class="login-panel-intro">Sign in with your university account to report, find or reclaim belongings.</p>', unsafe_allow_html=True)
-            signin, signup = st.tabs(["Sign in","Create account"])
-            with signin:
-                with st.form("login_form"):
-                    email = st.text_input("University email", placeholder="name@muj.manipal.edu")
-                    password = st.text_input("Password", type="password")
-                    go = st.form_submit_button("Sign in", type="primary", use_container_width=True)
-                if go:
-                    user = one("SELECT * FROM users WHERE email=?", (email.lower().strip(),))
-                    permitted_role = institutional_role(email)
-                    domain_ok = user is not None and (user["role"] == "admin" or (permitted_role is not None and user["role"] == permitted_role))
-                    if domain_ok and verify_password(password,user["salt"],user["password_hash"]):
-                        st.session_state.user = dict(user)
-                        log_action(user["id"],"LOGIN","Successful sign in")
+            st.markdown('<div class="login-eyebrow">WELCOME TO MUJ LOST &amp; FOUND</div><h2>Find what matters. Return what belongs.</h2><p class="login-panel-intro">Choose your university account type to continue.</p>', unsafe_allow_html=True)
+
+            faculty_col, student_col = st.columns(2, gap="small")
+            with faculty_col:
+                if st.button("Login – MUJ Faculty", key="faculty_login_choice", type="primary", use_container_width=True):
+                    st.session_state.login_mode = "faculty"
+            with student_col:
+                if st.button("Login – MUJ Student", key="student_login_choice", type="primary", use_container_width=True):
+                    st.session_state.login_mode = "student"
+
+            st.markdown('<div class="login-separator"></div>', unsafe_allow_html=True)
+
+            with st.expander("Guest / Other Users Login", expanded=st.session_state.login_mode == "admin"):
+                st.caption("Administrator access for authorised accounts.")
+                with st.form("admin_login_form"):
+                    admin_email = st.text_input("Email address", key="admin_login_email")
+                    admin_password = st.text_input("Password", type="password", key="admin_login_password")
+                    admin_go = st.form_submit_button("Continue", type="primary", use_container_width=True)
+                if admin_go:
+                    admin_user = one("SELECT * FROM users WHERE email=?", (admin_email.lower().strip(),))
+                    if admin_user is not None and admin_user["role"] == "admin" and verify_password(admin_password,admin_user["salt"],admin_user["password_hash"]):
+                        st.session_state.user = dict(admin_user)
+                        log_action(admin_user["id"],"LOGIN","Administrator sign in")
                         st.rerun()
                     else:
-                        st.error("Use your registered university account: @muj.manipal.edu for students or @jaipur.manipal.edu for faculty, with the correct password.")
+                        st.error("These credentials do not match an authorised administrator account.")
 
-            with signup:
+            if st.session_state.login_mode in ("student", "faculty"):
+                selected_role = st.session_state.login_mode
+                selected_label = "MUJ Student" if selected_role == "student" else "MUJ Faculty"
+                st.markdown(f'<div class="selected-login-label"> {selected_label} sign in</div>', unsafe_allow_html=True)
+                with st.form(f"{selected_role}_login_form"):
+                    email = st.text_input("University email", placeholder="name@muj.manipal.edu" if selected_role == "student" else "name@jaipur.manipal.edu", key=f"{selected_role}_email")
+                    password = st.text_input("Password", type="password", key=f"{selected_role}_password")
+                    go = st.form_submit_button(f"Continue as {selected_label}", type="primary", use_container_width=True)
+                if go:
+                    login_user = one("SELECT * FROM users WHERE email=?", (email.lower().strip(),))
+                    permitted_role = institutional_role(email)
+                    if login_user is not None and login_user["role"] == selected_role and permitted_role == selected_role and verify_password(password,login_user["salt"],login_user["password_hash"]):
+                        st.session_state.user = dict(login_user)
+                        log_action(login_user["id"],"LOGIN",f"{selected_label} sign in")
+                        st.rerun()
+                    else:
+                        expected_domain = "@muj.manipal.edu" if selected_role == "student" else "@jaipur.manipal.edu"
+                        st.error(f"Please use a registered {selected_label} account ending in {expected_domain} and its correct password.")
+
+            with st.expander("Create a new student or faculty account"):
                 with st.form("signup_form"):
-                    name = st.text_input("Full name")
-                    email2 = st.text_input("University email address")
-                    password2 = st.text_input("Create password", type="password")
-                    confirm = st.text_input("Confirm password", type="password")
+                    name = st.text_input("Full name", key="signup_name")
+                    email2 = st.text_input("University email address", key="signup_email")
+                    password2 = st.text_input("Create password", type="password", key="signup_password")
+                    confirm = st.text_input("Confirm password", type="password", key="signup_confirm")
                     ok = st.form_submit_button("Create account", type="primary", use_container_width=True)
                 if ok:
                     detected_role = institutional_role(email2)
@@ -453,7 +497,7 @@ if not st.session_state.user:
                     elif len(password2)<10 or password2!=confirm:
                         st.error("Use a password of at least 10 characters and make both passwords match.")
                     elif create_account(name.strip(),email2,password2):
-                        st.success(f"{'Student' if detected_role == 'student' else 'Faculty'} account created. Sign in to continue.")
+                        st.success(f"{'Student' if detected_role == 'student' else 'Faculty'} account created. You can now sign in.")
                         log_action(None,"ACCOUNT_CREATED",f"{detected_role}: {email2.lower().strip()}")
                     else:
                         st.error("An account with this email already exists.")
