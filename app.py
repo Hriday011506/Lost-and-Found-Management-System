@@ -612,11 +612,11 @@ elif page == "Report an item":
             event_date=st.date_input("Date lost" if typ == "Lost" else "Date found",value=date.today(),max_value=date.today())
             image_file=st.file_uploader("Upload item photo (optional but recommended)",type=["png","jpg","jpeg"],help="Add a clear photo of the lost or found item to help others recognise it.")
             identification_mark=st.text_input("Identification mark (if any)",placeholder="e.g. initials engraved on the back, a scratch near the corner, a sticker")
-            description=st.text_area("Description and identifying details",height=120,placeholder="Colour, brand, size, distinctive features and other useful details...")
+            description=st.text_area("Description (optional)",height=100,placeholder="Add any extra details that may help identify the item...")
         submit=st.form_submit_button("Submit report",type="primary")
     if submit:
-        if not name.strip() or not location.strip() or len(description.strip())<15:
-            st.error("Please provide the item name, the campus location, and a description of at least 15 characters.")
+        if not name.strip() or not location.strip():
+            st.error("Please provide the item name and the campus location.")
         else:
             image_path=None
             if image_file:
