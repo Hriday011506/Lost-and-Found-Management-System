@@ -390,7 +390,7 @@ with st.sidebar:
         u = st.session_state.user
         st.markdown(f"**{u['name']}**")
         st.caption(u["role"].title())
-        nav_options = ["Overview","Browse items","Claims & verification"] if u["role"]=="admin" else ["Overview","Browse items","Report an item","My activity","My claims"]
+        nav_options = ["Overview","Browse items","Claims & verification","User directory","Audit log"] if u["role"]=="admin" else ["Overview","Browse items","Report an item","My activity","My claims"]
         page = st.radio("NAVIGATION", nav_options, label_visibility="collapsed")
         if st.button("Log out", use_container_width=True):
             st.session_state.user = None
@@ -603,17 +603,19 @@ elif page in ("My claims","Claims & verification"):
             elif r["status"]!="Pending" and r["admin_note"]:
                 st.caption(f"Administrator note: {r['admin_note']}")
 
-if is_admin:
-    st.sidebar.divider()
-    st.sidebar.caption("ADMINISTRATION")
-    with st.sidebar:
-        if st.button("User directory",use_container_width=True):
-            st.session_state.show_users=True
-        if st.button("Audit log",use_container_width=True):
-            st.session_state.show_audit=True
-    if st.session_state.get("show_users"):
-        with st.expander("User directory",expanded=True):
-            st.dataframe(pd.DataFrame([dict(r) for r in rows("SELECT id,name,email,role,created_at FROM users ORDER BY created_at DESC")]),use_container_width=True,hide_index=True)
-    if st.session_state.get("show_audit"):
-        with st.expander("Recent audit activity",expanded=True):
-            st.dataframe(pd.DataFrame([dict(r) for r in rows("SELECT * FROM audit_log ORDER BY created_at DESC LIMIT 100")]),use_container_width=True,hide_index=True)
+elif page == "User directory" and is_admin:
+    st.markdown('<div class="hero"><h1>User directory</h1><p>Registered students, faculty and administrators.</p></div>', unsafe_allow_html=True)
+    directory = rows("SELECT id,name,email,role,created_at FROM users ORDER BY created_at DESC")
+    st.caption(f"{len(directory)} registered accounts")
+    if directory:
+        st.dataframe(pd.DataFrame([dict(r) for r in directory]),use_container_width=True,hide_index=True)
+    else:
+        st.info("No registered accounts yet.")
+
+elif page == "Audit log" and is_admin:
+    st.markdown('<div class="hero"><h1>Audit log</h1><p>Recent administrative and account activity.</p></div>', unsafe_allow_html=True)
+    audit = rows("SELECT * FROM audit_log ORDER BY created_at DESC LIMIT 100")
+    if audit:
+        st.dataframe(pd.DataFrame([dict(r) for r in audit]),use_container_width=True,hide_index=True)
+    else:
+        st.info("No activity recorded yet.")
