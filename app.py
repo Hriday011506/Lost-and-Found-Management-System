@@ -14,9 +14,6 @@ import pandas as pd
 import streamlit as st
 import streamlit as pt
 
-import psycopg2
-from psycopg2 import IntegrityError as PostgresIntegrityError
-from psycopg2.extras import DictCursor
 
 ROOT = Path(__file__).parent
 DB_PATH = ROOT / "lost_found.db"
@@ -25,108 +22,48 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 st.set_page_config(page_title="MUJ Lost & Found", page_icon="🔎", layout="wide", initial_sidebar_state="expanded")
 
-class PostgresConnection:
-    """Small compatibility layer so the existing app can use PostgreSQL with minimal SQL changes."""
-    def __init__(self, url):
-        self.raw = psycopg2.connect(url, cursor_factory=DictCursor, connect_timeout=15)
-
-    def execute(self, query, params=()):
-        cursor = self.raw.cursor()
-        cursor.execute(query.replace("?", "%s"), params)
-        return cursor
-
-    def executescript(self, script):
-        cursor = self.raw.cursor()
-        cursor.execute(script)
-        return cursor
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type:
-            self.raw.rollback()
-        else:
-            self.raw.commit()
-        self.raw.close()
-        return False
-
 def get_conn():
-    database_url = st.secrets.get("DATABASE_URL", "")
-    if database_url:
-        return PostgresConnection(database_url)
+    """Use the local SQLite database for this demonstration deployment."""
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 def init_db():
-    database_url = st.secrets.get("DATABASE_URL", "")
     with get_conn() as c:
-        if database_url:
-            c.executescript("""
-            CREATE TABLE IF NOT EXISTS users (
-              id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL,
-              email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL,
-              salt TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'student',
-              created_at TEXT NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS items (
-              id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES users(id),
-              report_type TEXT NOT NULL CHECK(report_type IN ('Lost','Found')),
-              item_name TEXT NOT NULL, category TEXT NOT NULL, description TEXT NOT NULL,
-              location TEXT NOT NULL, event_date TEXT NOT NULL, image_path TEXT,
-              identification_mark TEXT DEFAULT '',
-              status TEXT NOT NULL DEFAULT 'Open',
-              created_at TEXT NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS claims (
-              id BIGSERIAL PRIMARY KEY, item_id BIGINT NOT NULL REFERENCES items(id),
-              claimant_id BIGINT NOT NULL REFERENCES users(id), ownership_details TEXT NOT NULL,
-              status TEXT NOT NULL DEFAULT 'Pending', admin_note TEXT DEFAULT '',
-              created_at TEXT NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS audit_log (
-              id BIGSERIAL PRIMARY KEY, actor_id BIGINT,
-              action TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL
-            );
-            ALTER TABLE items ADD COLUMN IF NOT EXISTS identification_mark TEXT DEFAULT '';
-            """)
-        else:
-            c.executescript("""
-            CREATE TABLE IF NOT EXISTS users (
-              id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
-              email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL,
-              salt TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'student',
-              created_at TEXT NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS items (
-              id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
-              report_type TEXT NOT NULL CHECK(report_type IN ('Lost','Found')),
-              item_name TEXT NOT NULL, category TEXT NOT NULL, description TEXT NOT NULL,
-              location TEXT NOT NULL, event_date TEXT NOT NULL, image_path TEXT,
-              identification_mark TEXT DEFAULT '',
-              status TEXT NOT NULL DEFAULT 'Open',
-              created_at TEXT NOT NULL,
-              FOREIGN KEY(user_id) REFERENCES users(id)
-            );
-            CREATE TABLE IF NOT EXISTS claims (
-              id INTEGER PRIMARY KEY AUTOINCREMENT, item_id INTEGER NOT NULL,
-              claimant_id INTEGER NOT NULL, ownership_details TEXT NOT NULL,
-              status TEXT NOT NULL DEFAULT 'Pending', admin_note TEXT DEFAULT '',
-              created_at TEXT NOT NULL,
-              FOREIGN KEY(item_id) REFERENCES items(id),
-              FOREIGN KEY(claimant_id) REFERENCES users(id)
-            );
-            CREATE TABLE IF NOT EXISTS audit_log (
-              id INTEGER PRIMARY KEY AUTOINCREMENT, actor_id INTEGER,
-              action TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL
-            );
-            """)
-            item_columns = {row[1] for row in c.execute("PRAGMA table_info(items)").fetchall()}
-            if "identification_mark" not in item_columns:
-                c.execute("ALTER TABLE items ADD COLUMN identification_mark TEXT DEFAULT ''")
-        # Administrator provisioning remains controlled through Streamlit secrets.
+        c.executescript("""
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
+          email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL,
+          salt TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'student',
+          created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS items (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+          report_type TEXT NOT NULL CHECK(report_type IN ('Lost','Found')),
+          item_name TEXT NOT NULL, category TEXT NOT NULL, description TEXT NOT NULL,
+          location TEXT NOT NULL, event_date TEXT NOT NULL, image_path TEXT,
+          identification_mark TEXT DEFAULT '',
+          status TEXT NOT NULL DEFAULT 'Open',
+          created_at TEXT NOT NULL,
+          FOREIGN KEY(user_id) REFERENCES users(id)
+        );
+        CREATE TABLE IF NOT EXISTS claims (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, item_id INTEGER NOT NULL,
+          claimant_id INTEGER NOT NULL, ownership_details TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'Pending', admin_note TEXT DEFAULT '',
+          created_at TEXT NOT NULL,
+          FOREIGN KEY(item_id) REFERENCES items(id),
+          FOREIGN KEY(claimant_id) REFERENCES users(id)
+        );
+        CREATE TABLE IF NOT EXISTS audit_log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, actor_id INTEGER,
+          action TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL
+        );
+        """)
+        item_columns = {row[1] for row in c.execute("PRAGMA table_info(items)").fetchall()}
+        if "identification_mark" not in item_columns:
+            c.execute("ALTER TABLE items ADD COLUMN identification_mark TEXT DEFAULT ''")
 
 def hash_password(password: str, salt: str) -> str:
     return hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 240000).hex()
@@ -477,32 +414,10 @@ def create_account(name,email,password):
             c.execute("INSERT INTO users(name,email,password_hash,salt,role,created_at) VALUES(?,?,?,?,?,?)",
                       (name,email.lower().strip(),digest,salt,role,datetime.now().isoformat(timespec="seconds")))
         return True
-    except (sqlite3.IntegrityError, PostgresIntegrityError):
+    except sqlite3.IntegrityError:
         return False
 
-try:
-    init_db()
-    # Temporary, credential-safe database diagnostic.
-    if st.secrets.get("DATABASE_URL", ""):
-        with get_conn() as diagnostic_conn:
-            diagnostic_row = diagnostic_conn.execute(
-                "SELECT current_database() AS db, current_schema() AS schema, current_user AS db_user"
-            ).fetchone()
-            diagnostic_tables = diagnostic_conn.execute(
-                "SELECT table_name FROM information_schema.tables "
-                "WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name"
-            ).fetchall()
-        st.sidebar.caption(
-            "DB diagnostic: PostgreSQL | "
-            + str(diagnostic_row["db"]) + " / " + str(diagnostic_row["schema"])
-            + " | tables: " + (", ".join(row["table_name"] for row in diagnostic_tables) or "none")
-        )
-    else:
-        st.sidebar.caption("DB diagnostic: SQLite fallback (DATABASE_URL not detected)")
-except Exception as db_error:
-    st.error("Supabase database initialization failed. Check the Streamlit app logs for details.")
-    st.exception(db_error)
-    st.stop()
+init_db()
 
 # Provision the first administrator from Streamlit secrets; never hard-code credentials.
 try:
