@@ -105,13 +105,24 @@ def inject_css(theme):
 def metric(label, value, note=""):
     st.markdown(f'<div class="metric-card"><div class="metric-label">{label}</div><div class="metric-value">{value}</div><div class="metric-label">{note}</div></div>', unsafe_allow_html=True)
 
+def institutional_role(email: str):
+    address = email.strip().lower()
+    if address.endswith('@muj.manipal.edu'):
+        return 'student'
+    if address.endswith('@jaipur.manipal.edu'):
+        return 'staff'
+    return None
+
 def create_account(name,email,password):
+    role = institutional_role(email)
+    if role is None:
+        return False
     salt = secrets.token_hex(16)
     digest = hash_password(password,salt)
     try:
         with get_conn() as c:
             c.execute("INSERT INTO users(name,email,password_hash,salt,role,created_at) VALUES(?,?,?,?,?,?)",
-                      (name,email.lower().strip(),digest,salt,"student",datetime.now().isoformat(timespec="seconds")))
+                      (name,email.lower().strip(),digest,salt,role,datetime.now().isoformat(timespec="seconds")))
         return True
     except sqlite3.IntegrityError:
         return False
@@ -168,31 +179,36 @@ if not st.session_state.user:
         signin, signup = st.tabs(["Sign in","Create account"])
         with signin:
             with st.form("login_form"):
-                email = st.text_input("University email / account email")
+                email = st.text_input("University email")
                 password = st.text_input("Password", type="password")
                 go = st.form_submit_button("Sign in", type="primary", use_container_width=True)
             if go:
                 user = one("SELECT * FROM users WHERE email=?", (email.lower().strip(),))
-                if user and verify_password(password,user["salt"],user["password_hash"]):
+                permitted_role = institutional_role(email)
+                domain_ok = user is not None and (user["role"] == "admin" or (permitted_role is not None and user["role"] == permitted_role))
+                if domain_ok and verify_password(password,user["salt"],user["password_hash"]):
                     st.session_state.user = dict(user)
                     log_action(user["id"],"LOGIN","Successful sign in")
                     st.rerun()
                 else:
-                    st.error("Email or password is incorrect.")
+                    st.error("Use your registered university account: @muj.manipal.edu for students or @jaipur.manipal.edu for faculty, with the correct password.")
 
         with signup:
             with st.form("signup_form"):
                 name = st.text_input("Full name")
-                email2 = st.text_input("Email address")
+                email2 = st.text_input("University email address")
                 password2 = st.text_input("Create password", type="password")
                 confirm = st.text_input("Confirm password", type="password")
-                ok = st.form_submit_button("Create student account", type="primary", use_container_width=True)
+                ok = st.form_submit_button("Create account", type="primary", use_container_width=True)
             if ok:
-                if not name.strip() or "@" not in email2 or len(password2)<10 or password2!=confirm:
-                    st.error("Enter a name and valid email; use at least 10 characters and make passwords match.")
+                detected_role = institutional_role(email2)
+                if not name.strip() or detected_role is None:
+                    st.error("Registration is restricted to @muj.manipal.edu student accounts and @jaipur.manipal.edu faculty accounts.")
+                elif len(password2)<10 or password2!=confirm:
+                    st.error("Use a password of at least 10 characters and make both passwords match.")
                 elif create_account(name.strip(),email2,password2):
-                    st.success("Account created. Sign in to continue.")
-                    log_action(None,"ACCOUNT_CREATED",email2.lower().strip())
+                    st.success(f"{'Student' if detected_role == 'student' else 'Faculty'} account created. Sign in to continue.")
+                    log_action(None,"ACCOUNT_CREATED",f"{detected_role}: {email2.lower().strip()}")
                 else:
                     st.error("An account with this email already exists.")
     st.stop()
