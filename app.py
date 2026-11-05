@@ -488,16 +488,18 @@ elif page == "Report an item":
             typ=st.radio("I want to report",["Lost","Found"],horizontal=True)
             name=st.text_input("Item name",placeholder="e.g. Black leather wallet")
             category=st.selectbox("Category",["Electronics","ID / Cards","Bags","Clothing","Accessories","Books","Keys","Other"])
-            location=st.text_input("Last seen / found at",placeholder="e.g. Central Library, Ground Floor")
+            location_label = "Where did you lose the item?" if typ == "Lost" else "Where did you find the item?"
+            location_hint = "Enter the campus location where you last had the item, e.g. Academic Block 1, Room 204." if typ == "Lost" else "Enter the exact campus location where you found it, e.g. Central Library, Ground Floor."
+            location=st.text_input(location_label,placeholder="e.g. Central Library, Ground Floor",help=location_hint)
         with b:
-            event_date=st.date_input("Date",value=date.today(),max_value=date.today())
+            event_date=st.date_input("Date lost" if typ == "Lost" else "Date found",value=date.today(),max_value=date.today())
             image_file=st.file_uploader("Upload item photo (optional but recommended)",type=["png","jpg","jpeg"],help="Add a clear photo of the lost or found item to help others recognise it.")
             identification_mark=st.text_input("Identification mark (if any)",placeholder="e.g. initials engraved on the back, a scratch near the corner, a sticker")
             description=st.text_area("Description and identifying details",height=120,placeholder="Colour, brand, size, distinctive features and other useful details...")
         submit=st.form_submit_button("Submit report",type="primary")
     if submit:
         if not name.strip() or not location.strip() or len(description.strip())<15:
-            st.error("Please provide an item name, location and a description of at least 15 characters.")
+            st.error("Please provide the item name, the campus location, and a description of at least 15 characters.")
         else:
             image_path=None
             if image_file:
