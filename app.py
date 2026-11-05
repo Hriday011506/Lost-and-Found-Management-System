@@ -400,7 +400,7 @@ with st.sidebar:
 
 if not st.session_state.user:
     st.markdown('<div class="login-shell"><div class="login-brand"><div class="login-brand-mark">⌕</div><div><div class="login-brand-name">MUJ Lost &amp; Found</div><div class="login-brand-sub">MANIPAL UNIVERSITY JAIPUR</div></div></div></div>', unsafe_allow_html=True)
-    visual, right = st.columns([1.2, .88], gap="large", vertical_alignment="stretch")
+    visual, right = st.columns([1.2, .88], gap="large")
     with visual:
         st.markdown('<div class="login-visual"><div class="login-visual-copy"><div class="login-eyebrow">A campus community service</div><h1>Lost something?<br>Let’s bring it back.</h1><p>A simple way for the MUJ community to report belongings, discover found items and reconnect people with what matters.</p></div></div>', unsafe_allow_html=True)
     with right:
