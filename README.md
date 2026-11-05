@@ -10,6 +10,7 @@ The immediate product is a standalone website. It can be demonstrated, evaluated
 
 ## Current features
 
+- Restricted institutional email registration and sign-in: students use `@muj.manipal.edu`; faculty use `@jaipur.manipal.edu`
 - Independent registration and sign-in
 - Student / staff user experience and role-based administrator access
 - Lost and Found item reports with optional image upload
@@ -19,6 +20,14 @@ The immediate product is a standalone website. It can be demonstrated, evaluated
 - Campus dashboard, operational metrics and audit history
 - Dark / light appearance
 - SQLite persistence and salted PBKDF2 password hashes
+
+## Account eligibility
+
+- Student accounts: email address must end exactly with `@muj.manipal.edu`.
+- Faculty accounts: email address must end exactly with `@jaipur.manipal.edu`.
+- The account role is assigned from the email domain; users cannot choose or self-assign a privileged role.
+- Department reviewer and administrator accounts are provisioned separately by an administrator.
+- **Important:** domain checking restricts the address format but does not prove mailbox ownership. Before a real campus pilot, add email verification (one-time link / code) or an approved university identity verification process.
 
 ## Run locally
 
