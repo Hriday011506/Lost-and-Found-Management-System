@@ -38,6 +38,7 @@ def init_db():
           report_type TEXT NOT NULL CHECK(report_type IN ('Lost','Found')),
           item_name TEXT NOT NULL, category TEXT NOT NULL, description TEXT NOT NULL,
           location TEXT NOT NULL, event_date TEXT NOT NULL, image_path TEXT,
+          identification_mark TEXT DEFAULT '',
           status TEXT NOT NULL DEFAULT 'Open',
           created_at TEXT NOT NULL,
           FOREIGN KEY(user_id) REFERENCES users(id)
@@ -55,6 +56,9 @@ def init_db():
           action TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL
         );
         """)
+        item_columns = {row[1] for row in c.execute("PRAGMA table_info(items)").fetchall()}
+        if "identification_mark" not in item_columns:
+            c.execute("ALTER TABLE items ADD COLUMN identification_mark TEXT DEFAULT ''")
         # Demo admin is created only when the database is first initialized.
         # Admin provisioning is intentionally not seeded in the public app.
         # Create the first administrator locally through the documented bootstrap procedure
@@ -258,6 +262,8 @@ elif page == "Browse items":
                 st.markdown(f"**{r['item_name']}**  ·  {r['report_type']}  ·  {r['category']}")
                 st.write(r["description"])
                 st.caption(f"📍 {r['location']}  •  Date: {r['event_date']}  •  Reported by {r['reporter']}")
+                if r["identification_mark"]:
+                    st.markdown(f"**Identification mark:** {r['identification_mark']}")
             with b:
                 if r["image_path"] and Path(r["image_path"]).exists(): st.image(r["image_path"],use_container_width=True)
                 if not is_admin and r["user_id"]!=uid and r["report_type"]=="Found":
@@ -289,8 +295,9 @@ elif page == "Report an item":
             location=st.text_input("Last seen / found at",placeholder="e.g. Central Library, Ground Floor")
         with b:
             event_date=st.date_input("Date",value=date.today(),max_value=date.today())
-            image_file=st.file_uploader("Item image (optional)",type=["png","jpg","jpeg"])
-            description=st.text_area("Description and identifying details",height=150,placeholder="Colour, brand, distinguishing marks, contents (avoid exposing sensitive information)...")
+            image_file=st.file_uploader("Upload item photo (optional but recommended)",type=["png","jpg","jpeg"],help="Add a clear photo of the lost or found item to help others recognise it.")
+            identification_mark=st.text_input("Identification mark (if any)",placeholder="e.g. initials engraved on the back, a scratch near the corner, a sticker")
+            description=st.text_area("Description and identifying details",height=120,placeholder="Colour, brand, size, distinctive features and other useful details...")
         submit=st.form_submit_button("Submit report",type="primary")
     if submit:
         if not name.strip() or not location.strip() or len(description.strip())<15:
@@ -302,9 +309,9 @@ elif page == "Report an item":
                 image_path=str(UPLOAD_DIR/f"{secrets.token_hex(12)}{suffix}")
                 Path(image_path).write_bytes(image_file.getbuffer())
             with get_conn() as c:
-                cur=c.execute("""INSERT INTO items(user_id,report_type,item_name,category,description,location,event_date,image_path,created_at)
-                                 VALUES(?,?,?,?,?,?,?,?,?)""",
-                              (uid,typ,name.strip(),category,description.strip(),location.strip(),event_date.isoformat(),image_path,datetime.now().isoformat(timespec="seconds")))
+                cur=c.execute("""INSERT INTO items(user_id,report_type,item_name,category,description,location,event_date,image_path,identification_mark,created_at)
+                                 VALUES(?,?,?,?,?,?,?,?,?,?)""",
+                              (uid,typ,name.strip(),category,description.strip(),location.strip(),event_date.isoformat(),image_path,identification_mark.strip(),datetime.now().isoformat(timespec="seconds")))
                 item_id=cur.lastrowid
             log_action(uid,"ITEM_REPORTED",f"{typ} item #{item_id}: {name.strip()}")
             st.success(f"Report #{item_id} submitted and is now visible in Browse items.")
@@ -319,6 +326,8 @@ elif page == "My activity":
                 with a:
                     st.markdown(f"**#{r['id']} · {r['item_name']}** — {r['report_type']}")
                     st.caption(f"{r['category']} • {r['location']} • {r['event_date']}")
+                    if r["identification_mark"]:
+                        st.write(f"Identification mark: {r['identification_mark']}")
                 with b: st.write(f"**{r['status']}**")
                 if is_admin or r["status"]=="Open":
                     if st.button("Mark resolved / closed",key=f"close_{r['id']}"):
