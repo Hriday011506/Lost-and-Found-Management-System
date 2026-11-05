@@ -360,7 +360,7 @@ with st.sidebar:
         u = st.session_state.user
         st.markdown(f"**{u['name']}**")
         st.caption(u["role"].title())
-        nav_options = ["Overview","Browse items","Report an item","My activity","Claims & verification"] if u["role"]=="admin" else ["Overview","Browse items","Report an item","My activity","My claims"]
+        nav_options = ["Overview","Browse items","Claims & verification"] if u["role"]=="admin" else ["Overview","Browse items","Report an item","My activity","My claims"]
         page = st.radio("NAVIGATION", nav_options, label_visibility="collapsed")
         if st.button("Log out", use_container_width=True):
             st.session_state.user = None
