@@ -54,7 +54,8 @@ def init_db():
           status TEXT NOT NULL DEFAULT 'Pending', admin_note TEXT DEFAULT '',
           created_at TEXT NOT NULL,
           FOREIGN KEY(item_id) REFERENCES items(id),
-          FOREIGN KEY(claimant_id) REFERENCES users(id)
+          FOREIGN KEY(claimant_id) REFERENCES users(id),
+          UNIQUE(item_id, claimant_id)
         );
         CREATE TABLE IF NOT EXISTS claim_comments (
           id INTEGER PRIMARY KEY AUTOINCREMENT, claim_id INTEGER NOT NULL,
@@ -596,8 +597,12 @@ elif page == "Browse items":
                         if len(details.strip())<20: st.error("Please provide at least 20 characters of useful identifying detail.")
                         else:
                             with get_conn() as c:
-                                c.execute("INSERT INTO claims(item_id,claimant_id,ownership_details,created_at) VALUES(?,?,?,?)",
-                                          (r["id"],uid,details.strip(),datetime.now().isoformat(timespec="seconds")))
+                                existing= c.execute("SELECT id FROM claims WHERE item_id=? AND claimant_id=?",(r["id"],uid)).fetchone()
+                                if existing:
+                                    st.error("You have already submitted a claim for this item. Only one claim per student is allowed.")
+                                else:
+                                    c.execute("INSERT INTO claims(item_id,claimant_id,ownership_details,created_at) VALUES(?,?,?,?)",
+                                              (r["id"],uid,details.strip(),datetime.now().isoformat(timespec="seconds")))
                             log_action(uid,"CLAIM_SUBMITTED",f"Item #{r['id']}")
                             st.success("Claim submitted for administrator review.")
                             st.session_state[f"claim_item_{r['id']}"]=False
@@ -738,6 +743,7 @@ elif page in ("My claims","Claims & verification"):
                             with get_conn() as c:
                                 c.execute("UPDATE claims SET status='Approved',admin_note=? WHERE id=?",(note.strip(),r["id"]))
                                 c.execute("UPDATE items SET status='Resolved' WHERE id=?",(r["item_id"],))
+                                c.execute("UPDATE claims SET status='Rejected',admin_note='Another claim for this item was approved.' WHERE item_id=? AND id<>? AND status IN ('Pending','Needs info')",(r["item_id"],r["id"]))
                                 c.execute("INSERT INTO claim_comments(claim_id,author_id,comment,created_at) VALUES(?,?,?,?)",
                                           (r["id"],uid,note.strip(),datetime.now().isoformat(timespec="seconds")))
                             log_action(uid,"CLAIM_APPROVED",f"Claim #{r['id']}")
