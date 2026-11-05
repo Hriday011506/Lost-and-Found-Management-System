@@ -85,24 +85,32 @@ def one(query, args=()):
 
 def inject_css(theme):
     if theme == "Dark":
-        bg, panel, text, muted, border, accent = "#0b1220", "#111c30", "#edf3ff", "#9aabc4", "#253550", "#67a8ff"
+        bg, panel, text, muted, border, accent = "#171717", "#242424", "#fffaf7", "#c9b8ae", "#49372f", "#e0642f"
+        soft = "#302019"
     else:
-        bg, panel, text, muted, border, accent = "#f4f7fb", "#ffffff", "#17233b", "#66758d", "#e2e8f0", "#2563eb"
+        bg, panel, text, muted, border, accent = "#ffffff", "#ffffff", "#262626", "#77716e", "#eee7e3", "#d85f2b"
+        soft = "#fff4ee"
     st.markdown(f"""
     <style>
     .stApp {{background:{bg}; color:{text};}}
     [data-testid="stSidebar"] {{background:{panel}; border-right:1px solid {border};}}
-    .block-container {{padding-top:2rem; max-width:1400px;}}
-    .hero {{padding:1.5rem 1.7rem; border:1px solid {border}; border-radius:18px;
-      background:linear-gradient(120deg,{panel},{bg}); margin-bottom:1.2rem;}}
-    .hero h1 {{font-size:2.15rem; margin:0 0 .35rem 0; color:{text};}}
-    .hero p {{color:{muted}; margin:0; font-size:1.02rem;}}
-    .metric-card {{background:{panel}; border:1px solid {border}; border-radius:15px; padding:1rem 1.1rem;}}
-    .metric-label {{font-size:.83rem;color:{muted};}}
-    .metric-value {{font-size:1.85rem;font-weight:700;color:{text};}}
+    .block-container {{padding-top:2rem; padding-bottom:3rem; max-width:1280px;}}
+    .hero {{padding:2rem 2.1rem; border:1px solid {border}; border-radius:20px;
+      background:linear-gradient(125deg,{panel},{soft}); margin-bottom:1.5rem;
+      box-shadow:0 8px 28px rgba(120,65,35,.055);}}
+    .hero h1 {{font-size:2.25rem; letter-spacing:-.035em; margin:0 0 .55rem 0; color:{text};}}
+    .hero p {{color:{muted}; margin:0; font-size:1.06rem; line-height:1.65;}}
+    .metric-card {{background:{panel}; border:1px solid {border}; border-radius:16px; padding:1.15rem 1.25rem; box-shadow:0 4px 16px rgba(120,65,35,.045);}}
+    .metric-label {{font-size:.84rem;color:{muted};}}
+    .metric-value {{font-size:1.9rem;font-weight:750;color:{text};}}
     .muted {{color:{muted};}}
-    div[data-testid="stForm"] {{border:1px solid {border}; border-radius:14px; padding:1rem;}}
-    .stButton>button[kind="primary"] {{background:{accent}; border:0;}}
+    div[data-testid="stForm"] {{background:{panel}; border:1px solid {border}; border-radius:16px; padding:1.2rem;}}
+    div[data-testid="stTabs"] button {{font-weight:600;}}
+    .stButton>button, .stFormSubmitButton>button {{border-radius:10px; min-height:2.7rem; font-weight:600;}}
+    .stButton>button[kind="primary"], .stFormSubmitButton>button[kind="primary"] {{background:{accent}; border:1px solid {accent}; color:#ffffff;}}
+    .stButton>button[kind="primary"]:hover, .stFormSubmitButton>button[kind="primary"]:hover {{background:#bd4d20; border-color:#bd4d20; color:#ffffff;}}
+    a {{color:{accent} !important;}}
+    h1,h2,h3 {{letter-spacing:-.02em;}}
     </style>
     """, unsafe_allow_html=True)
 
