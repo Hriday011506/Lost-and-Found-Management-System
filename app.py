@@ -480,7 +480,13 @@ def create_account(name,email,password):
     except (sqlite3.IntegrityError, PostgresIntegrityError):
         return False
 
-init_db()
+try:
+    init_db()
+except Exception as db_error:
+    st.error("Supabase database initialization failed. Check the Streamlit app logs for details.")
+    st.exception(db_error)
+    st.stop()
+
 # Provision the first administrator from Streamlit secrets; never hard-code credentials.
 try:
     admin_email = st.secrets["bootstrap"]["admin_email"]
