@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.streamlit/secrets.toml
+lost_found.db
+uploads/*
+!uploads/.gitkeep
+.DS_Store
