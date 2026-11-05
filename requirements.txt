@@ -1,4 +1,2 @@
 streamlit>=1.35,<2.0
 pandas>=2.0,<4.0
-psycopg2-binary>=2.9,<3.0
-# PostgreSQL driver used by the Supabase database connection.
