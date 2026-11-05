@@ -117,6 +117,21 @@ def create_account(name,email,password):
         return False
 
 init_db()
+# Provision the first administrator from Streamlit secrets; never hard-code credentials.
+try:
+    admin_email = st.secrets["bootstrap"]["admin_email"]
+    admin_password = st.secrets["bootstrap"]["admin_password"]
+    if admin_email and admin_password and not one("SELECT id FROM users WHERE role='admin'"):
+        salt = secrets.token_hex(16)
+        digest = hash_password(admin_password, salt)
+        with get_conn() as c:
+            c.execute("""INSERT INTO users(name,email,password_hash,salt,role,created_at)
+                         VALUES(?,?,?,?,?,?)""",
+                      ("Campus Administrator", admin_email.lower().strip(), digest, salt, "admin",
+                       datetime.now().isoformat(timespec="seconds")))
+except Exception:
+    pass
+
 if "user" not in st.session_state:
     st.session_state.user = None
 if "theme" not in st.session_state:
@@ -147,8 +162,8 @@ if not st.session_state.user:
     with left:
         st.subheader("Campus Lost & Found")
         st.write("A proposed digital service for the university community. Search listings, report an item and submit an ownership claim through one transparent workflow.")
-        st.markdown("- Verified student accounts and administrator review\n- Searchable lost and found listings\n- Claim tracking and status updates\n- Designed for a future SLCM integration")
-        st.info("Pilot note: This is a prototype. It is not currently connected to MUJ SLCM or an official university identity provider.")
+        st.markdown("- Verified student accounts and administrator review\n- Searchable lost and found listings\n- Claim tracking and status updates\n- Independent campus service with its own sign-in and records")
+        st.info("Pilot note: This is an independent prototype, not an official university service. It runs with its own accounts and database; no SLCM connection is required.")
     with right:
         signin, signup = st.tabs(["Sign in","Create account"])
         with signin:
@@ -164,7 +179,7 @@ if not st.session_state.user:
                     st.rerun()
                 else:
                     st.error("Email or password is incorrect.")
-            st.caption("Initial demo admin: admin@campus.local / ChangeMe-Admin123! — change this immediately before any real deployment.")
+
         with signup:
             with st.form("signup_form"):
                 name = st.text_input("Full name")
