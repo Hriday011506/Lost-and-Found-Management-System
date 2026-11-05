@@ -83,48 +83,43 @@ def one(query, args=()):
     with get_conn() as c:
         return c.execute(query, args).fetchone()
 
-def inject_css(theme):
-    if theme == "Dark":
-        bg, panel, text, muted, border, accent = "#171717", "#242424", "#fffaf7", "#c9b8ae", "#49372f", "#e0642f"
-        soft, field = "#302019", "#302a27"
-    else:
-        bg, panel, text, muted, border, accent = "#ffffff", "#ffffff", "#262626", "#625b57", "#eee3dd", "#d85f2b"
-        soft, field = "#fff4ee", "#ffffff"
-    st.markdown(f"""
+def inject_css():
+    bg, panel, text, muted, border, accent = "#ffffff", "#ffffff", "#292524", "#78716c", "#eee7e3", "#d85f2b"
+    st.markdown("""
     <style>
-    :root {{ color-scheme: {'dark' if theme == 'Dark' else 'light'}; }}
-    .stApp, [data-testid="stAppViewContainer"] {{background:{bg}; color:{text};}}
-    [data-testid="stSidebar"] {{background:{panel}; border-right:1px solid {border};}}
-    [data-testid="stSidebar"] * {{color:{text} !important;}}
-    [data-testid="stSidebar"] [data-baseweb="select"] * {{color:{text} !important;}}
-    .block-container {{padding-top:2rem; padding-bottom:3rem; max-width:1280px;}}
-    .hero {{padding:2rem 2.1rem; border:1px solid {border}; border-radius:20px;
-      background:linear-gradient(125deg,{panel},{soft}); margin-bottom:1.5rem;
-      box-shadow:0 8px 28px rgba(120,65,35,.055);}}
-    .hero h1 {{font-size:2.25rem; letter-spacing:-.035em; margin:0 0 .55rem 0; color:{text};}}
-    .hero p {{color:{muted}; margin:0; font-size:1.06rem; line-height:1.65;}}
-    .metric-card {{background:{panel}; border:1px solid {border}; border-radius:16px; padding:1.15rem 1.25rem; box-shadow:0 4px 16px rgba(120,65,35,.045);}}
-    .metric-label {{font-size:.84rem;color:{muted};}}
-    .metric-value {{font-size:1.9rem;font-weight:750;color:{text};}}
-    div[data-testid="stForm"] {{background:{panel}; border:1px solid {border}; border-radius:16px; padding:1.2rem;}}
-    [data-testid="stWidgetLabel"] p, label, .stMarkdown, [data-testid="stCaptionContainer"] p {{color:{text};}}
-    input, textarea, [data-baseweb="input"] input, [data-baseweb="textarea"] textarea {{
-      background:{field} !important; color:{text} !important; border-color:{border} !important;
-      border-radius:9px !important;
-    }}
-    [data-baseweb="select"] > div {{background:{field}; border-color:{border}; color:{text};}}
-    [data-testid="stTabs"] button {{font-weight:600; color:{muted};}}
-    [data-testid="stTabs"] button[aria-selected="true"] {{color:{accent} !important;}}
-    [data-testid="stTabs"] [data-baseweb="tab-highlight"] {{background:{accent};}}
-    .stButton button, .stFormSubmitButton button {{border-radius:10px; min-height:2.7rem; font-weight:600;}}
-    .stButton button[kind="primary"], .stFormSubmitButton button, button[kind="primary"] {{
-      background:{accent} !important; border:1px solid {accent} !important; color:#ffffff !important;
-    }}
-    .stButton button[kind="primary"]:hover, .stFormSubmitButton button:hover {{
+    :root { color-scheme: light; }
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {background:#ffffff !important; color:#292524;}
+    [data-testid="stHeader"] {background:rgba(255,255,255,.96) !important;}
+    [data-testid="stSidebar"] {background:#ffffff; border-right:1px solid #f0e8e3;}
+    [data-testid="stSidebar"] * {color:#292524 !important;}
+    .block-container {padding-top:2.4rem; padding-bottom:3rem; max-width:1240px;}
+    .hero {padding:1.2rem 0 1.5rem 0; border:0; border-bottom:1px solid #eee7e3; border-radius:0;
+      background:#ffffff; margin-bottom:1.8rem; box-shadow:none;}
+    .hero h1 {font-size:2.15rem; letter-spacing:-.04em; margin:0 0 .5rem 0; color:#292524;}
+    .hero p {color:#78716c; margin:0; font-size:1.04rem; line-height:1.65;}
+    .metric-card {background:transparent; border:0; border-bottom:2px solid #d85f2b; border-radius:0; padding:.7rem .2rem; box-shadow:none;}
+    .metric-label {font-size:.84rem;color:#78716c;}
+    .metric-value {font-size:1.9rem;font-weight:750;color:#292524;}
+    div[data-testid="stForm"] {background:transparent; border:0; border-radius:0; padding:0; box-shadow:none;}
+    [data-testid="stWidgetLabel"] p, label, .stMarkdown, [data-testid="stCaptionContainer"] p {color:#292524;}
+    input, textarea, [data-baseweb="input"] input, [data-baseweb="textarea"] textarea {
+      background:#ffffff !important; color:#292524 !important; border:1px solid #ded6d1 !important;
+      border-radius:7px !important;
+    }
+    [data-baseweb="select"] > div {background:#ffffff; border-color:#ded6d1; color:#292524;}
+    [data-testid="stTabs"] button {font-weight:600; color:#78716c;}
+    [data-testid="stTabs"] button[aria-selected="true"] {color:#d85f2b !important;}
+    [data-testid="stTabs"] [data-baseweb="tab-highlight"] {background:#d85f2b;}
+    .stButton button, .stFormSubmitButton button {border-radius:7px; min-height:2.65rem; font-weight:600;}
+    .stButton button[kind="primary"], .stFormSubmitButton button, button[kind="primary"] {
+      background:#d85f2b !important; border:1px solid #d85f2b !important; color:#ffffff !important;
+    }
+    .stButton button[kind="primary"]:hover, .stFormSubmitButton button:hover {
       background:#bd4d20 !important; border-color:#bd4d20 !important; color:#ffffff !important;
-    }}
-    a {{color:{accent} !important;}}
-    h1,h2,h3 {{letter-spacing:-.02em; color:{text};}}
+    }
+    a {color:#d85f2b !important;}
+    h1,h2,h3 {letter-spacing:-.025em; color:#292524;}
+    [data-testid="stVerticalBlockBorderWrapper"] {border:0 !important; box-shadow:none !important;}
     </style>
     """, unsafe_allow_html=True)
 
@@ -171,15 +166,11 @@ except Exception:
 
 if "user" not in st.session_state:
     st.session_state.user = None
-if "theme" not in st.session_state:
-    st.session_state.theme = "Light"
-inject_css(st.session_state.theme)
+inject_css()
 
 with st.sidebar:
     st.markdown("## 🔎 MUJ Lost & Found")
     st.caption("MANIPAL UNIVERSITY JAIPUR")
-    st.session_state.theme = st.selectbox("Appearance", ["Dark","Light"], index=0 if st.session_state.theme=="Dark" else 1)
-    inject_css(st.session_state.theme)
     st.divider()
     if st.session_state.user:
         u = st.session_state.user
