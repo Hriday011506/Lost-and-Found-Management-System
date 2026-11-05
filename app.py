@@ -98,8 +98,20 @@ def inject_css():
     }
  
     /* ---------- Base ---------- */
-    html, body, .stApp, [data-testid="stAppViewContainer"], .stApp * {
+    html, body, .stApp, [data-testid="stAppViewContainer"],
+    .stApp p, .stApp label, .stApp input, .stApp textarea, .stApp select,
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp li {
       font-family:'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    /* Do not override Streamlit's icon font: doing so prints words such as
+       "visibility" instead of rendering the password eye icon. */
+    .material-icons, .material-icons-outlined, .material-symbols-rounded,
+    .material-symbols-outlined, [data-testid="stIconMaterial"] {
+      font-family:'Material Icons', 'Material Symbols Rounded' !important;
+      font-weight:normal !important; font-style:normal !important;
+      letter-spacing:normal !important; text-transform:none !important;
+      white-space:nowrap !important; direction:ltr !important;
+      -webkit-font-feature-settings:'liga'; -webkit-font-smoothing:antialiased;
     }
     .stApp, [data-testid="stAppViewContainer"] {background:#FFFFFF !important; color:var(--ink);}
     [data-testid="stHeader"] {background:rgba(255,255,255,.92) !important; backdrop-filter:blur(8px);
@@ -232,9 +244,26 @@ def inject_css():
     .stButton button:not([kind="primary"]):hover, .stDownloadButton button:hover {
       background:var(--o50); border-color:var(--o600); color:var(--o700);
     }
-    .stButton button[kind="primary"], .stFormSubmitButton button, button[kind="primary"] {
-      background:var(--o600) !important; border:1px solid var(--o600) !important; color:#fff !important;
-      box-shadow:0 2px 8px rgba(217,84,30,.25);
+    .stButton button[kind="primary"], .stFormSubmitButton button,
+    [data-testid="stFormSubmitButton"] button, [data-testid="stFormSubmitButton"] button *,
+    button[kind="primary"] {
+      background:var(--o600) !important; border:1px solid var(--o600) !important;
+      color:#ffffff !important; -webkit-text-fill-color:#ffffff !important;
+      box-shadow:0 2px 8px rgba(217,84,30,.18);
+    }
+    [data-testid="stFormSubmitButton"] button p,
+    [data-testid="stFormSubmitButton"] button span {
+      color:#ffffff !important; -webkit-text-fill-color:#ffffff !important;
+    }
+    [data-testid="stFormSubmitButton"] button:hover {
+      background:var(--o700) !important; border-color:var(--o700) !important;
+    }
+    [data-testid="stTextInput"] button {
+      background:transparent !important; border:0 !important; box-shadow:none !important;
+      color:var(--muted) !important; -webkit-text-fill-color:var(--muted) !important;
+    }
+    [data-testid="stTextInput"] button span {
+      font-family:'Material Icons', 'Material Symbols Rounded' !important;
     }
     .stButton button[kind="primary"]:hover, .stFormSubmitButton button:hover {
       background:var(--o700) !important; border-color:var(--o700) !important; color:#fff !important;
