@@ -56,14 +56,9 @@ def init_db():
         );
         """)
         # Demo admin is created only when the database is first initialized.
-        admin = c.execute("SELECT id FROM users WHERE email=?", ("admin@campus.local",)).fetchone()
-        if not admin:
-            salt = secrets.token_hex(16)
-            pwd = "ChangeMe-Admin123!"
-            digest = hashlib.pbkdf2_hmac("sha256", pwd.encode(), salt.encode(), 240000).hex()
-            c.execute("""INSERT INTO users(name,email,password_hash,salt,role,created_at)
-                         VALUES(?,?,?,?,?,?)""",
-                      ("Campus Administrator", "admin@campus.local", digest, salt, "admin", datetime.now().isoformat(timespec="seconds")))
+        # Admin provisioning is intentionally not seeded in the public app.
+        # Create the first administrator locally through the documented bootstrap procedure
+        # before deploying to an approved pilot environment.
 
 def hash_password(password: str, salt: str) -> str:
     return hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 240000).hex()
