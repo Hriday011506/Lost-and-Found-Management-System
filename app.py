@@ -305,33 +305,42 @@ def inject_css():
     .stApp:has(.login-shell) [data-testid="stAppViewContainer"]::before {
       content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
       background:
-        linear-gradient(90deg,rgba(36,20,9,.16),rgba(36,20,9,.03) 58%,rgba(36,20,9,.08)),
-        url('/app/static/campus_bg.jpg') center center/cover no-repeat,
+        linear-gradient(90deg,rgba(36,20,9,.08),rgba(36,20,9,.02) 58%,rgba(36,20,9,.05)),
+        url('https://raw.githubusercontent.com/Hriday011506/Lost-and-Found-Management-System/main/static/campus_bg.jpg') center center/cover no-repeat,
         linear-gradient(125deg,#8B431D,#F0A13F);
     }
     .stApp:has(.login-shell) [data-testid="stMain"],
     .stApp:has(.login-shell) [data-testid="stMainBlockContainer"] {background:transparent !important; position:relative; z-index:1;}
-    .stApp:has(.login-shell) .block-container {max-width:none !important; padding:3.5rem 0 2rem 10.2% !important;}
+    .stApp:has(.login-shell) .block-container {max-width:none !important; padding:2.5rem 0 2rem 10.2% !important;}
+    .stApp:has(.login-shell) [data-testid="stHorizontalBlock"] {align-items:flex-start !important;}
     .login-shell {max-width:430px; margin:0 0 1.1rem 0; position:relative; z-index:2;}
     .login-brand {display:flex; align-items:center; gap:.8rem; margin:0 0 1rem .1rem; color:#fff;
       text-shadow:0 1px 8px rgba(0,0,0,.35);}
     .login-brand-mark {width:42px; height:42px; display:grid; place-items:center; border-radius:12px;
       background:var(--o600); color:#fff; font-size:1.35rem; font-weight:800;}
     .login-brand-name {font-size:1.1rem; font-weight:800; color:#fff; letter-spacing:-.02em;}
-    .login-brand-sub {font-size:.7rem; color:rgba(255,255,255,.9); letter-spacing:.12em; font-weight:700;}
+    .login-brand-sub {font-size:.7rem; color:rgba(255,255,255,.95); letter-spacing:.12em; font-weight:700;}
     .login-visual {display:none;}
-    .login-panel {background:rgba(255,255,255,.98); border:1px solid rgba(255,255,255,.85);
-      border-radius:24px; padding:1.65rem 1.7rem 1.35rem; width:100%; max-width:430px;
-      min-height:0; box-shadow:0 18px 55px rgba(45,25,12,.22);}
-    .login-panel h2 {font-size:1.45rem; margin:.1rem 0 .3rem; color:var(--ink);}
-    .login-panel-intro {color:var(--muted); margin:0 0 .9rem; font-size:.9rem;}
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"]:has([data-testid="stTabs"]) {
+      background:#fff !important; border:1px solid rgba(255,255,255,.9) !important;
+      border-radius:24px !important; padding:1.25rem 1.45rem 1rem !important;
+      width:100%; max-width:430px; min-height:0;
+      box-shadow:0 18px 55px rgba(45,25,12,.22) !important;
+    }
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"]:has([data-testid="stTabs"]):hover {
+      border-color:#fff !important; box-shadow:0 18px 55px rgba(45,25,12,.22) !important;
+    }
+    .login-panel h2 {font-size:1.42rem; margin:.1rem 0 .3rem; color:var(--ink);}
+    .login-panel-intro {color:var(--muted); margin:0 0 .9rem; font-size:.88rem;}
     .login-eyebrow {font-size:.7rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--o700); margin-bottom:.55rem;}
     .login-footnote {font-size:.74rem; color:var(--muted); text-align:center; margin-top:.85rem;}
-    .login-panel [data-testid="stTabs"] [role="tab"] {font-size:.88rem !important; padding:.6rem .8rem !important;}
-    .login-panel [data-testid="stForm"] {border:0 !important; padding:.6rem 0 0 !important; box-shadow:none !important;}
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stForm"] {
+      border:0 !important; padding:.55rem 0 0 !important; box-shadow:none !important; background:transparent !important;
+    }
+    .stApp:has(.login-shell) [data-testid="stTabs"] [role="tab"] {font-size:.88rem !important; padding:.6rem .8rem !important;}
     @media (max-width:900px) {
-      .stApp:has(.login-shell) .block-container {padding:2rem 1rem !important;}
-      .login-panel,.login-shell {max-width:100%;}
+      .stApp:has(.login-shell) .block-container {padding:1.5rem 1rem !important;}
+      .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"]:has([data-testid="stTabs"]) {max-width:100%;}
     }
 
     /* ---------- Mobile ---------- */
@@ -408,44 +417,47 @@ with st.sidebar:
         page = "Sign in"
 
 if not st.session_state.user:
-    st.markdown('<div class="login-shell"><div class="login-brand"><div class="login-brand-mark">⌕</div><div><div class="login-brand-name">MUJ Lost &amp; Found</div><div class="login-brand-sub">MANIPAL UNIVERSITY JAIPUR</div></div></div></div>', unsafe_allow_html=True)
-    st.markdown('<div class="login-panel"><div class="login-eyebrow">WELCOME TO MUJ LOST &amp; FOUND</div><h2>Find what matters. Return what belongs.</h2><p class="login-panel-intro">Sign in with your university account to report, find or reclaim belongings.</p>', unsafe_allow_html=True)
-    signin, signup = st.tabs(["Sign in","Create account"])
-    with signin:
-        with st.form("login_form"):
-            email = st.text_input("University email", placeholder="name@muj.manipal.edu")
-            password = st.text_input("Password", type="password")
-            go = st.form_submit_button("Sign in", type="primary", use_container_width=True)
-        if go:
-            user = one("SELECT * FROM users WHERE email=?", (email.lower().strip(),))
-            permitted_role = institutional_role(email)
-            domain_ok = user is not None and (user["role"] == "admin" or (permitted_role is not None and user["role"] == permitted_role))
-            if domain_ok and verify_password(password,user["salt"],user["password_hash"]):
-                st.session_state.user = dict(user)
-                log_action(user["id"],"LOGIN","Successful sign in")
-                st.rerun()
-            else:
-                st.error("Use your registered university account: @muj.manipal.edu for students or @jaipur.manipal.edu for faculty, with the correct password.")
+    left, empty_space = st.columns([0.43, 0.57], gap="small")
+    with left:
+        st.markdown('<div class="login-shell"><div class="login-brand"><div class="login-brand-mark">⌕</div><div><div class="login-brand-name">MUJ Lost &amp; Found</div><div class="login-brand-sub">MANIPAL UNIVERSITY JAIPUR</div></div></div></div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div class="login-eyebrow">WELCOME TO MUJ LOST &amp; FOUND</div><h2>Find what matters. Return what belongs.</h2><p class="login-panel-intro">Sign in with your university account to report, find or reclaim belongings.</p>', unsafe_allow_html=True)
+            signin, signup = st.tabs(["Sign in","Create account"])
+            with signin:
+                with st.form("login_form"):
+                    email = st.text_input("University email", placeholder="name@muj.manipal.edu")
+                    password = st.text_input("Password", type="password")
+                    go = st.form_submit_button("Sign in", type="primary", use_container_width=True)
+                if go:
+                    user = one("SELECT * FROM users WHERE email=?", (email.lower().strip(),))
+                    permitted_role = institutional_role(email)
+                    domain_ok = user is not None and (user["role"] == "admin" or (permitted_role is not None and user["role"] == permitted_role))
+                    if domain_ok and verify_password(password,user["salt"],user["password_hash"]):
+                        st.session_state.user = dict(user)
+                        log_action(user["id"],"LOGIN","Successful sign in")
+                        st.rerun()
+                    else:
+                        st.error("Use your registered university account: @muj.manipal.edu for students or @jaipur.manipal.edu for faculty, with the correct password.")
 
-    with signup:
-        with st.form("signup_form"):
-            name = st.text_input("Full name")
-            email2 = st.text_input("University email address")
-            password2 = st.text_input("Create password", type="password")
-            confirm = st.text_input("Confirm password", type="password")
-            ok = st.form_submit_button("Create account", type="primary", use_container_width=True)
-        if ok:
-            detected_role = institutional_role(email2)
-            if not name.strip() or detected_role is None:
-                st.error("Registration is restricted to @muj.manipal.edu student accounts and @jaipur.manipal.edu faculty accounts.")
-            elif len(password2)<10 or password2!=confirm:
-                st.error("Use a password of at least 10 characters and make both passwords match.")
-            elif create_account(name.strip(),email2,password2):
-                st.success(f"{'Student' if detected_role == 'student' else 'Faculty'} account created. Sign in to continue.")
-                log_action(None,"ACCOUNT_CREATED",f"{detected_role}: {email2.lower().strip()}")
-            else:
-                st.error("An account with this email already exists.")
-    st.markdown('<div class="login-footnote">For MUJ students and faculty · Secure campus access</div></div>', unsafe_allow_html=True)
+            with signup:
+                with st.form("signup_form"):
+                    name = st.text_input("Full name")
+                    email2 = st.text_input("University email address")
+                    password2 = st.text_input("Create password", type="password")
+                    confirm = st.text_input("Confirm password", type="password")
+                    ok = st.form_submit_button("Create account", type="primary", use_container_width=True)
+                if ok:
+                    detected_role = institutional_role(email2)
+                    if not name.strip() or detected_role is None:
+                        st.error("Registration is restricted to @muj.manipal.edu student accounts and @jaipur.manipal.edu faculty accounts.")
+                    elif len(password2)<10 or password2!=confirm:
+                        st.error("Use a password of at least 10 characters and make both passwords match.")
+                    elif create_account(name.strip(),email2,password2):
+                        st.success(f"{'Student' if detected_role == 'student' else 'Faculty'} account created. Sign in to continue.")
+                        log_action(None,"ACCOUNT_CREATED",f"{detected_role}: {email2.lower().strip()}")
+                    else:
+                        st.error("An account with this email already exists.")
+            st.markdown('<div class="login-footnote">For MUJ students and faculty · Secure campus access</div>', unsafe_allow_html=True)
     st.stop()
 
 user = st.session_state.user
