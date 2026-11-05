@@ -86,14 +86,17 @@ def one(query, args=()):
 def inject_css(theme):
     if theme == "Dark":
         bg, panel, text, muted, border, accent = "#171717", "#242424", "#fffaf7", "#c9b8ae", "#49372f", "#e0642f"
-        soft = "#302019"
+        soft, field = "#302019", "#302a27"
     else:
-        bg, panel, text, muted, border, accent = "#ffffff", "#ffffff", "#262626", "#77716e", "#eee7e3", "#d85f2b"
-        soft = "#fff4ee"
+        bg, panel, text, muted, border, accent = "#ffffff", "#ffffff", "#262626", "#625b57", "#eee3dd", "#d85f2b"
+        soft, field = "#fff4ee", "#ffffff"
     st.markdown(f"""
     <style>
-    .stApp {{background:{bg}; color:{text};}}
+    :root {{ color-scheme: {'dark' if theme == 'Dark' else 'light'}; }}
+    .stApp, [data-testid="stAppViewContainer"] {{background:{bg}; color:{text};}}
     [data-testid="stSidebar"] {{background:{panel}; border-right:1px solid {border};}}
+    [data-testid="stSidebar"] * {{color:{text} !important;}}
+    [data-testid="stSidebar"] [data-baseweb="select"] * {{color:{text} !important;}}
     .block-container {{padding-top:2rem; padding-bottom:3rem; max-width:1280px;}}
     .hero {{padding:2rem 2.1rem; border:1px solid {border}; border-radius:20px;
       background:linear-gradient(125deg,{panel},{soft}); margin-bottom:1.5rem;
@@ -103,14 +106,25 @@ def inject_css(theme):
     .metric-card {{background:{panel}; border:1px solid {border}; border-radius:16px; padding:1.15rem 1.25rem; box-shadow:0 4px 16px rgba(120,65,35,.045);}}
     .metric-label {{font-size:.84rem;color:{muted};}}
     .metric-value {{font-size:1.9rem;font-weight:750;color:{text};}}
-    .muted {{color:{muted};}}
     div[data-testid="stForm"] {{background:{panel}; border:1px solid {border}; border-radius:16px; padding:1.2rem;}}
-    div[data-testid="stTabs"] button {{font-weight:600;}}
-    .stButton>button, .stFormSubmitButton>button {{border-radius:10px; min-height:2.7rem; font-weight:600;}}
-    .stButton>button[kind="primary"], .stFormSubmitButton>button[kind="primary"] {{background:{accent}; border:1px solid {accent}; color:#ffffff;}}
-    .stButton>button[kind="primary"]:hover, .stFormSubmitButton>button[kind="primary"]:hover {{background:#bd4d20; border-color:#bd4d20; color:#ffffff;}}
+    [data-testid="stWidgetLabel"] p, label, .stMarkdown, [data-testid="stCaptionContainer"] p {{color:{text};}}
+    input, textarea, [data-baseweb="input"] input, [data-baseweb="textarea"] textarea {{
+      background:{field} !important; color:{text} !important; border-color:{border} !important;
+      border-radius:9px !important;
+    }}
+    [data-baseweb="select"] > div {{background:{field}; border-color:{border}; color:{text};}}
+    [data-testid="stTabs"] button {{font-weight:600; color:{muted};}}
+    [data-testid="stTabs"] button[aria-selected="true"] {{color:{accent} !important;}}
+    [data-testid="stTabs"] [data-baseweb="tab-highlight"] {{background:{accent};}}
+    .stButton button, .stFormSubmitButton button {{border-radius:10px; min-height:2.7rem; font-weight:600;}}
+    .stButton button[kind="primary"], .stFormSubmitButton button, button[kind="primary"] {{
+      background:{accent} !important; border:1px solid {accent} !important; color:#ffffff !important;
+    }}
+    .stButton button[kind="primary"]:hover, .stFormSubmitButton button:hover {{
+      background:#bd4d20 !important; border-color:#bd4d20 !important; color:#ffffff !important;
+    }}
     a {{color:{accent} !important;}}
-    h1,h2,h3 {{letter-spacing:-.02em;}}
+    h1,h2,h3 {{letter-spacing:-.02em; color:{text};}}
     </style>
     """, unsafe_allow_html=True)
 
