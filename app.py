@@ -297,6 +297,34 @@ def inject_css():
     [data-testid="stSpinner"] * {color:var(--o600) !important;}
     [data-testid="stProgress"] > div > div > div {background:var(--o600);}
  
+    /* ---------- Sign-in experience ---------- */
+    .login-shell {max-width:1180px; margin:0 auto; padding:1.2rem 0 2rem;}
+    .login-brand {display:flex; align-items:center; gap:.8rem; margin:0 0 1.1rem .2rem;}
+    .login-brand-mark {width:42px; height:42px; display:grid; place-items:center; border-radius:12px;
+      background:var(--o600); color:#fff; font-size:1.35rem; font-weight:800;}
+    .login-brand-name {font-size:1.05rem; font-weight:800; color:var(--ink); letter-spacing:-.02em;}
+    .login-brand-sub {font-size:.72rem; color:var(--muted); letter-spacing:.12em; font-weight:700;}
+    .login-visual {min-height:570px; height:100%; border-radius:18px; overflow:hidden; position:relative;
+      display:flex; align-items:flex-end; padding:2.5rem;
+      background:linear-gradient(180deg,rgba(30,19,12,.02) 15%,rgba(30,19,12,.72) 100%),
+      url('/app/static/campus_bg.jpg') center 48%/cover no-repeat, linear-gradient(135deg,#9B4B20,#F2A64C);}
+    .login-visual-copy {position:relative; z-index:1; max-width:520px; color:#fff;}
+    .login-eyebrow {font-size:.76rem; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:#FFE4D1; margin-bottom:.8rem;}
+    .login-visual-copy h1 {font-size:2.65rem; line-height:1.12; letter-spacing:-.045em; color:#fff; margin:0 0 .8rem;}
+    .login-visual-copy p {font-size:1rem; line-height:1.7; color:rgba(255,255,255,.9); margin:0;}
+    .login-panel {background:#fff; border:1px solid var(--line); border-radius:18px; padding:2.1rem 2rem;
+      min-height:570px; box-shadow:0 12px 36px rgba(54,35,22,.07);}
+    .login-panel h2 {font-size:1.7rem; margin:.15rem 0 .35rem; color:var(--ink);}
+    .login-panel-intro {color:var(--muted); margin:0 0 1.5rem; font-size:.93rem;}
+    .login-footnote {font-size:.78rem; color:var(--muted); text-align:center; margin-top:1.1rem;}
+    .login-panel [data-testid="stTabs"] [role="tab"] {font-size:.9rem !important; padding:.65rem .8rem !important;}
+    .login-panel [data-testid="stForm"] {border:0 !important; padding:1rem 0 0 !important; box-shadow:none !important;}
+    @media (max-width:900px) {
+      .login-visual {min-height:310px; padding:1.8rem;}
+      .login-visual-copy h1 {font-size:2rem;}
+      .login-panel {min-height:auto; padding:1.5rem;}
+    }
+
     /* ---------- Mobile ---------- */
     @media (max-width:640px) {
       .block-container {padding-top:1.4rem; padding-left:1rem; padding-right:1rem;}
@@ -371,17 +399,16 @@ with st.sidebar:
         page = "Sign in"
 
 if not st.session_state.user:
-    st.markdown('<div class="hero"><h1>MUJ Lost & Found</h1><p>A simple campus service helping students and faculty report, find and reclaim their belongings.</p></div>', unsafe_allow_html=True)
-    left, right = st.columns([1.15, .85], gap="large")
-    with left:
-        st.subheader("Find what matters. Return what belongs.")
-        st.write("A dedicated lost and found service for the Manipal University Jaipur community. Students and faculty can easily report lost belongings, share found items, browse listings and submit ownership claims.")
-        st.markdown("- Verified student accounts and administrator review\n- Searchable lost and found listings\n- Claim tracking and status updates\n- Independent campus service with its own sign-in and records")
+    st.markdown('<div class="login-shell"><div class="login-brand"><div class="login-brand-mark">⌕</div><div><div class="login-brand-name">MUJ Lost &amp; Found</div><div class="login-brand-sub">MANIPAL UNIVERSITY JAIPUR</div></div></div></div>', unsafe_allow_html=True)
+    visual, right = st.columns([1.2, .88], gap="large", vertical_alignment="stretch")
+    with visual:
+        st.markdown('<div class="login-visual"><div class="login-visual-copy"><div class="login-eyebrow">A campus community service</div><h1>Lost something?<br>Let’s bring it back.</h1><p>A simple way for the MUJ community to report belongings, discover found items and reconnect people with what matters.</p></div></div>', unsafe_allow_html=True)
     with right:
+        st.markdown('<div class="login-panel"><div class="login-eyebrow" style="color:#B8430F">WELCOME TO MUJ LOST &amp; FOUND</div><h2>Sign in to continue</h2><p class="login-panel-intro">Access your campus account to manage reports and claims.</p>', unsafe_allow_html=True)
         signin, signup = st.tabs(["Sign in","Create account"])
         with signin:
             with st.form("login_form"):
-                email = st.text_input("University email")
+                email = st.text_input("University email", placeholder="name@muj.manipal.edu")
                 password = st.text_input("Password", type="password")
                 go = st.form_submit_button("Sign in", type="primary", use_container_width=True)
             if go:
@@ -413,6 +440,7 @@ if not st.session_state.user:
                     log_action(None,"ACCOUNT_CREATED",f"{detected_role}: {email2.lower().strip()}")
                 else:
                     st.error("An account with this email already exists.")
+        st.markdown('<div class="login-footnote">For MUJ students and faculty · Secure campus access</div></div>', unsafe_allow_html=True)
     st.stop()
 
 user = st.session_state.user
