@@ -330,6 +330,32 @@ def inject_css():
     .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"]:has([data-testid="stTabs"]):hover {
       border-color:#fff !important; box-shadow:0 18px 55px rgba(45,25,12,.22) !important;
     }
+    /* Keep the complete login choice and validation area readable over the photo. */
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"]:has(.login-eyebrow):has([data-testid="stButton"]) {
+      background:rgba(255,255,255,.98) !important;
+      border:1px solid #fff !important;
+      border-radius:22px !important;
+      padding:1.35rem 1.45rem 1.15rem !important;
+      box-shadow:0 18px 55px rgba(45,25,12,.24) !important;
+      max-width:570px !important;
+    }
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"]:has(.login-eyebrow):has([data-testid="stButton"]) > div {
+      background:transparent !important;
+    }
+    .stApp:has(.login-shell) [data-testid="stAlert"] {
+      background:#FFF4EC !important;
+      border:1px solid #D9541E !important;
+      border-left:5px solid #B8430F !important;
+      border-radius:10px !important;
+      color:#702B12 !important;
+      box-shadow:0 4px 14px rgba(45,25,12,.12) !important;
+    }
+    .stApp:has(.login-shell) [data-testid="stAlert"] *,
+    .stApp:has(.login-shell) [data-testid="stAlert"] p {
+      color:#702B12 !important;
+      -webkit-text-fill-color:#702B12 !important;
+      font-weight:600 !important;
+    }
     .stApp:has(.login-shell) [data-testid="stButton"] button[kind="primary"] {
       background:#0874BE !important; border:1px solid #0874BE !important; color:#fff !important;
       -webkit-text-fill-color:#fff !important; font-size:.88rem !important; font-weight:750 !important;
