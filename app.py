@@ -482,6 +482,23 @@ def create_account(name,email,password):
 
 try:
     init_db()
+    # Temporary, credential-safe database diagnostic.
+    if st.secrets.get("DATABASE_URL", ""):
+        with get_conn() as diagnostic_conn:
+            diagnostic_row = diagnostic_conn.execute(
+                "SELECT current_database() AS db, current_schema() AS schema, current_user AS db_user"
+            ).fetchone()
+            diagnostic_tables = diagnostic_conn.execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name"
+            ).fetchall()
+        st.sidebar.caption(
+            "DB diagnostic: PostgreSQL | "
+            + str(diagnostic_row["db"]) + " / " + str(diagnostic_row["schema"])
+            + " | tables: " + (", ".join(row["table_name"] for row in diagnostic_tables) or "none")
+        )
+    else:
+        st.sidebar.caption("DB diagnostic: SQLite fallback (DATABASE_URL not detected)")
 except Exception as db_error:
     st.error("Supabase database initialization failed. Check the Streamlit app logs for details.")
     st.exception(db_error)
