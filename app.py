@@ -16,7 +16,7 @@ DB_PATH = ROOT / "lost_found.db"
 UPLOAD_DIR = ROOT / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-st.set_page_config(page_title="Campus Lost & Found", page_icon="🔎", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="MUJ Lost & Found", page_icon="🔎", layout="wide", initial_sidebar_state="expanded")
 
 def get_conn():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
@@ -150,12 +150,12 @@ except Exception:
 if "user" not in st.session_state:
     st.session_state.user = None
 if "theme" not in st.session_state:
-    st.session_state.theme = "Dark"
+    st.session_state.theme = "Light"
 inject_css(st.session_state.theme)
 
 with st.sidebar:
-    st.markdown("## 🔎 Campus Connect")
-    st.caption("LOST & FOUND • MUJ PILOT")
+    st.markdown("## 🔎 MUJ Lost & Found")
+    st.caption("MANIPAL UNIVERSITY JAIPUR")
     st.session_state.theme = st.selectbox("Appearance", ["Dark","Light"], index=0 if st.session_state.theme=="Dark" else 1)
     inject_css(st.session_state.theme)
     st.divider()
@@ -172,13 +172,12 @@ with st.sidebar:
         page = "Sign in"
 
 if not st.session_state.user:
-    st.markdown('<div class="hero"><h1>Lost something on campus?</h1><p>A single place to report, discover and reunite belongings with their owners.</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero"><h1>MUJ Lost & Found</h1><p>A simple campus service helping students and faculty report, find and reclaim their belongings.</p></div>', unsafe_allow_html=True)
     left, right = st.columns([1.15, .85], gap="large")
     with left:
-        st.subheader("Campus Lost & Found")
-        st.write("A proposed digital service for the university community. Search listings, report an item and submit an ownership claim through one transparent workflow.")
+        st.subheader("Find what matters. Return what belongs.")
+        st.write("A dedicated lost and found service for the Manipal University Jaipur community. Students and faculty can easily report lost belongings, share found items, browse listings and submit ownership claims.")
         st.markdown("- Verified student accounts and administrator review\n- Searchable lost and found listings\n- Claim tracking and status updates\n- Independent campus service with its own sign-in and records")
-        st.info("Pilot note: This is an independent prototype, not an official university service. It runs with its own accounts and database; no SLCM connection is required.")
     with right:
         signin, signup = st.tabs(["Sign in","Create account"])
         with signin:
