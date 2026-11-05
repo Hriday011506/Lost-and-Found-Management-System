@@ -464,31 +464,42 @@ if not st.session_state.user:
         with st.container(border=True):
             st.markdown('<div class="login-eyebrow">WELCOME TO MUJ LOST &amp; FOUND</div><h2>Find what matters. Return what belongs.</h2><p class="login-panel-intro">Choose your university account type to continue.</p>', unsafe_allow_html=True)
 
-            faculty_col, student_col = st.columns(2, gap="small")
+            faculty_col, student_col, admin_col = st.columns(3, gap="small")
             with faculty_col:
-                if st.button("Login – MUJ Faculty", key="faculty_login_choice", type="primary", use_container_width=True):
+                if st.button("Login – Faculty", key="faculty_login_choice", type="primary", use_container_width=True):
                     st.session_state.login_mode = "faculty"
             with student_col:
-                if st.button("Login – MUJ Student", key="student_login_choice", type="primary", use_container_width=True):
+                if st.button("Login – Student", key="student_login_choice", type="primary", use_container_width=True):
                     st.session_state.login_mode = "student"
+            with admin_col:
+                if st.button("Admin Login", key="admin_login_choice", type="primary", use_container_width=True):
+                    st.session_state.login_mode = "admin"
 
             st.markdown('<div class="login-separator"></div>', unsafe_allow_html=True)
 
-            if st.session_state.login_mode in ("student", "faculty"):
+            if st.session_state.login_mode in ("student", "faculty", "admin"):
                 selected_role = st.session_state.login_mode
-                selected_label = "MUJ Student" if selected_role == "student" else "MUJ Faculty"
-                st.markdown(f'<div class="selected-login-label"> {selected_label} sign in</div>', unsafe_allow_html=True)
+                selected_label = {"student": "MUJ Student", "faculty": "MUJ Faculty", "admin": "Administrator"}[selected_role]
+                placeholder = "Administrator email" if selected_role == "admin" else ("name@muj.manipal.edu" if selected_role == "student" else "name@jaipur.manipal.edu")
+                st.markdown(f'<div class="selected-login-label">{selected_label} sign in</div>', unsafe_allow_html=True)
                 with st.form(f"{selected_role}_login_form"):
-                    email = st.text_input("University email", placeholder="name@muj.manipal.edu" if selected_role == "student" else "name@jaipur.manipal.edu", key=f"{selected_role}_email")
+                    email = st.text_input("Email address", placeholder=placeholder, key=f"{selected_role}_email")
                     password = st.text_input("Password", type="password", key=f"{selected_role}_password")
                     go = st.form_submit_button(f"Continue as {selected_label}", type="primary", use_container_width=True)
                 if go:
                     login_user = one("SELECT * FROM users WHERE email=?", (email.lower().strip(),))
                     permitted_role = institutional_role(email)
-                    if login_user is not None and login_user["role"] == selected_role and permitted_role == selected_role and verify_password(password,login_user["salt"],login_user["password_hash"]):
+                    role_valid = (
+                        login_user is not None
+                        and login_user["role"] == selected_role
+                        and (selected_role == "admin" or permitted_role == selected_role)
+                    )
+                    if role_valid and verify_password(password, login_user["salt"], login_user["password_hash"]):
                         st.session_state.user = dict(login_user)
-                        log_action(login_user["id"],"LOGIN",f"{selected_label} sign in")
+                        log_action(login_user["id"], "LOGIN", f"{selected_label} sign in")
                         st.rerun()
+                    elif selected_role == "admin":
+                        st.error("Administrator sign-in failed. Check the provisioned admin email and password.")
                     else:
                         expected_domain = "@muj.manipal.edu" if selected_role == "student" else "@jaipur.manipal.edu"
                         st.error(f"Please use a registered {selected_label} account ending in {expected_domain} and its correct password.")
