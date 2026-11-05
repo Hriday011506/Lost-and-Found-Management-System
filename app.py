@@ -10,6 +10,7 @@ import secrets
 
 import pandas as pd
 import streamlit as st
+import streamlit as pt
 
 ROOT = Path(__file__).parent
 DB_PATH = ROOT / "lost_found.db"
@@ -84,66 +85,182 @@ def one(query, args=()):
         return c.execute(query, args).fetchone()
 
 def inject_css():
-    bg, panel, text, muted, border, accent = "#ffffff", "#ffffff", "#292524", "#78716c", "#eee7e3", "#d85f2b"
     st.markdown("""
     <style>
-    :root { color-scheme: light; }
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {background:#ffffff !important; color:#292524;}
-    [data-testid="stHeader"] {background:rgba(255,255,255,.96) !important;}
-    [data-testid="stSidebar"] {background:#ffffff; border-right:1px solid #f0e8e3;}
-    [data-testid="stSidebar"] * {color:#292524 !important;}
-    .block-container {padding-top:2.4rem; padding-bottom:3rem; max-width:1240px;}
-    .hero {padding:1.2rem 0 1.5rem 0; border:0; border-bottom:1px solid #eee7e3; border-radius:0;
-      background:#ffffff; margin-bottom:1.8rem; box-shadow:none;}
-    .hero h1 {font-size:2.15rem; letter-spacing:-.04em; margin:0 0 .5rem 0; color:#292524;}
-    .hero p {color:#78716c; margin:0; font-size:1.04rem; line-height:1.65;}
-    .metric-card {background:transparent; border:0; border-bottom:2px solid #d85f2b; border-radius:0; padding:.7rem .2rem; box-shadow:none;}
-    .metric-label {font-size:.84rem;color:#78716c;}
-    .metric-value {font-size:1.9rem;font-weight:750;color:#292524;}
-    div[data-testid="stForm"] {background:transparent; border:0; border-radius:0; padding:0; box-shadow:none;}
-    [data-testid="stWidgetLabel"] p, label, .stMarkdown, [data-testid="stCaptionContainer"] p {color:#292524;}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+ 
+    :root {
+      color-scheme: light;
+      --o600:#D9541E; --o700:#B8430F; --o50:#FFF4EC; --o100:#FFE4D1; --o200:#FFCBA8;
+      --ink:#26201C; --muted:#6F655E; --line:#EDE4DE; --field:#DDD2CB;
+      --found-bg:#E8F5EE; --found-fg:#17623D;
+      --radius:12px;
+    }
+ 
+    /* ---------- Base ---------- */
+    html, body, .stApp, [data-testid="stAppViewContainer"], .stApp * {
+      font-family:'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    .stApp, [data-testid="stAppViewContainer"] {background:#FFFFFF !important; color:var(--ink);}
+    [data-testid="stHeader"] {background:rgba(255,255,255,.92) !important; backdrop-filter:blur(8px);
+      border-bottom:3px solid var(--o600);}
+    #MainMenu, footer {visibility:hidden;}
+    .block-container {padding-top:2.2rem; padding-bottom:4rem; max-width:1200px;}
+    h1,h2,h3,h4 {color:var(--ink); letter-spacing:-.025em; font-weight:750;}
+    h2 {font-size:1.5rem;} h3 {font-size:1.2rem;}
+    p, li, label, .stMarkdown {line-height:1.65;}
+    a {color:var(--o700) !important; text-decoration-color:var(--o200); text-underline-offset:3px;}
+    a:hover {color:var(--o600) !important;}
+    hr {border-color:var(--line) !important;}
+ 
+    /* ---------- Sidebar ---------- */
+    [data-testid="stSidebar"] {background:var(--o50); border-right:1px solid var(--o100);}
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] *,
+    [data-testid="stSidebar"] label, [data-testid="stSidebar"] p {color:var(--ink) !important;}
+    [data-testid="stSidebar"] .stButton button:not([kind="primary"]) {
+      background:#fff; border:1px solid var(--o200); color:var(--o700) !important;
+    }
+ 
+    /* ---------- Hero ---------- */
+    .hero {
+      position:relative; overflow:hidden;
+      padding:2rem 2.2rem 2rem 2.4rem; margin-bottom:1.8rem;
+      background:linear-gradient(105deg, var(--o50) 0%, #FFFFFF 70%);
+      border:1px solid var(--o100); border-radius:16px;
+    }
+    .hero::before {content:""; position:absolute; left:0; top:0; bottom:0; width:6px; background:var(--o600);}
+    .hero h1 {font-size:2.3rem; line-height:1.15; letter-spacing:-.04em; margin:0 0 .6rem 0; color:var(--ink); font-weight:800;}
+    .hero p {color:var(--muted); margin:0; font-size:1.05rem; max-width:62ch;}
+ 
+    /* ---------- Metrics ---------- */
+    .metric-card {
+      background:#fff; border:1px solid var(--line); border-top:3px solid var(--o600);
+      border-radius:var(--radius); padding:1rem 1.2rem; box-shadow:0 1px 2px rgba(38,32,28,.04);
+    }
+    .metric-label {font-size:.85rem; color:var(--muted); font-weight:500;}
+    .metric-value {font-size:2rem; font-weight:800; color:var(--ink); letter-spacing:-.03em; line-height:1.2;}
+    [data-testid="stMetric"] {background:#fff; border:1px solid var(--line); border-top:3px solid var(--o600);
+      border-radius:var(--radius); padding:.9rem 1.1rem;}
+    [data-testid="stMetricValue"] {font-weight:800; color:var(--ink);}
+    [data-testid="stMetricLabel"] p {color:var(--muted) !important;}
+ 
+    /* ---------- Cards (st.container(border=True)) and item cards ---------- */
+    [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"]) {
+      border-radius:var(--radius);
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+      border:1px solid var(--line) !important; border-radius:var(--radius) !important;
+      background:#fff; box-shadow:0 1px 2px rgba(38,32,28,.04);
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+      border-color:var(--o200) !important; box-shadow:0 6px 20px rgba(217,84,30,.08);
+    }
+    /* nested wrappers (layout columns) should stay flat */
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stVerticalBlockBorderWrapper"] {
+      box-shadow:none;
+    }
+    [data-testid="stImage"] img {border-radius:10px;}
+ 
+    /* Optional helpers for your own markup */
+    .item-card {background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:1.1rem 1.2rem;
+      margin-bottom:1rem; transition:border-color .15s ease, box-shadow .15s ease;}
+    .item-card:hover {border-color:var(--o200); box-shadow:0 6px 20px rgba(217,84,30,.08);}
+    .item-title {font-size:1.08rem; font-weight:700; color:var(--ink); margin:.35rem 0 .25rem 0;}
+    .item-meta {font-size:.88rem; color:var(--muted);}
+    .badge {display:inline-block; padding:.18rem .65rem; border-radius:999px; font-size:.78rem; font-weight:700; margin-right:.4rem;}
+    .badge-lost {background:var(--o100); color:var(--o700);}
+    .badge-found {background:var(--found-bg); color:var(--found-fg);}
+    .badge-open {background:#fff; color:var(--ink); border:1px solid var(--field);}
+    .badge-pending {background:#FFF6D6; color:#7A5600;}
+    .badge-approved {background:var(--found-bg); color:var(--found-fg);}
+    .badge-rejected {background:#FDE8E8; color:#9B1C1C;}
+    .badge-closed {background:#EFEAE6; color:var(--muted);}
+ 
+    /* ---------- Forms ---------- */
+    div[data-testid="stForm"] {background:#fff; border:1px solid var(--line); border-radius:16px;
+      padding:1.6rem 1.6rem 1.2rem; box-shadow:0 1px 3px rgba(38,32,28,.05);}
+    [data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] *,
+    [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
+    .stTextInput label, .stTextArea label, .stSelectbox label {color:var(--ink) !important; opacity:1 !important;}
+    [data-testid="stWidgetLabel"] p {font-weight:600; font-size:.92rem;}
+    [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {color:var(--muted) !important; opacity:1 !important;}
+ 
     input, textarea, [data-baseweb="input"] input, [data-baseweb="textarea"] textarea {
-      background:#ffffff !important; color:#292524 !important; border:1px solid #ded6d1 !important;
-      border-radius:7px !important;
+      background:#fff !important; color:var(--ink) !important;
     }
-    [data-baseweb="select"] > div {background:#ffffff; border-color:#ded6d1; color:#292524;}
-    /* Force readable tab labels: Streamlit's default pale text was overriding the theme. */
-    [data-testid="stTabs"] [role="tab"],
-    [data-testid="stTabs"] button,
-    [data-baseweb="tab"] {
-      color:#292524 !important; -webkit-text-fill-color:#292524 !important;
-      opacity:1 !important; font-weight:650 !important; font-size:1.05rem !important;
+    [data-baseweb="input"], [data-baseweb="textarea"], [data-baseweb="select"] > div {
+      background:#fff !important; border:1px solid var(--field) !important; border-radius:9px !important;
+      transition:border-color .15s ease, box-shadow .15s ease;
     }
+    [data-baseweb="input"]:focus-within, [data-baseweb="textarea"]:focus-within,
+    [data-baseweb="select"] > div:focus-within {
+      border-color:var(--o600) !important; box-shadow:0 0 0 3px rgba(217,84,30,.18) !important;
+    }
+    input::placeholder, textarea::placeholder {color:#8F857E !important; opacity:1 !important;}
+    [data-baseweb="popover"] ul {background:#fff !important;}
+    [data-baseweb="popover"] li:hover, [data-baseweb="popover"] [aria-selected="true"] {background:var(--o50) !important;}
+ 
+    [data-testid="stFileUploaderDropzone"] {background:var(--o50); border:1.5px dashed var(--o200); border-radius:var(--radius);}
+    [data-testid="stFileUploaderDropzone"] * {color:var(--ink) !important;}
+    [data-testid="stFileUploaderDropzone"] button {background:#fff; border:1px solid var(--o200); color:var(--o700) !important;}
+ 
+    /* ---------- Buttons ---------- */
+    .stButton button, .stFormSubmitButton button, .stDownloadButton button {
+      border-radius:9px; min-height:2.7rem; font-weight:650; padding:0 1.2rem;
+      transition:background .15s ease, border-color .15s ease, transform .05s ease;
+    }
+    .stButton button:not([kind="primary"]), .stDownloadButton button {
+      background:#fff; color:var(--o700); border:1px solid var(--o200);
+    }
+    .stButton button:not([kind="primary"]):hover, .stDownloadButton button:hover {
+      background:var(--o50); border-color:var(--o600); color:var(--o700);
+    }
+    .stButton button[kind="primary"], .stFormSubmitButton button, button[kind="primary"] {
+      background:var(--o600) !important; border:1px solid var(--o600) !important; color:#fff !important;
+      box-shadow:0 2px 8px rgba(217,84,30,.25);
+    }
+    .stButton button[kind="primary"]:hover, .stFormSubmitButton button:hover {
+      background:var(--o700) !important; border-color:var(--o700) !important; color:#fff !important;
+    }
+    .stButton button:active, .stFormSubmitButton button:active {transform:translateY(1px);}
+    button:focus-visible, a:focus-visible, [role="tab"]:focus-visible {outline:3px solid rgba(217,84,30,.4) !important; outline-offset:2px;}
+ 
+    /* ---------- Tabs ---------- */
+    [data-testid="stTabs"] [data-baseweb="tab-list"] {gap:.35rem; border-bottom:1px solid var(--line);}
+    [data-testid="stTabs"] [role="tab"], [data-testid="stTabs"] button, [data-baseweb="tab"] {
+      color:var(--muted) !important; -webkit-text-fill-color:var(--muted) !important;
+      opacity:1 !important; font-weight:650 !important; font-size:1rem !important;
+      padding:.7rem 1.1rem !important; border-radius:9px 9px 0 0;
+    }
+    [data-testid="stTabs"] [role="tab"]:hover {background:var(--o50); color:var(--o700) !important; -webkit-text-fill-color:var(--o700) !important;}
     [data-testid="stTabs"] [role="tab"][aria-selected="true"],
     [data-testid="stTabs"] button[aria-selected="true"],
     [data-baseweb="tab"][aria-selected="true"] {
-      color:#d85f2b !important; -webkit-text-fill-color:#d85f2b !important;
-      opacity:1 !important;
+      color:var(--o600) !important; -webkit-text-fill-color:var(--o600) !important; background:var(--o50);
     }
-    [data-testid="stTabs"] [data-baseweb="tab-highlight"] {background:#d85f2b !important;}
-    [data-testid="stTabs"] [data-baseweb="tab-border"] {background:#eee7e3 !important;}
-    /* Keep all form labels, placeholders and captions legible on white. */
-    [data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] *,
-    [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
-    [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p,
-    .stTextInput label, .stTextArea label, .stSelectbox label {
-      color:#292524 !important; opacity:1 !important;
+    [data-testid="stTabs"] [data-baseweb="tab-highlight"] {background:var(--o600) !important; height:3px !important;}
+    [data-testid="stTabs"] [data-baseweb="tab-border"] {background:var(--line) !important;}
+ 
+    /* ---------- Expanders, alerts, tables ---------- */
+    [data-testid="stExpander"] {border:1px solid var(--line) !important; border-radius:var(--radius) !important; background:#fff;}
+    [data-testid="stExpander"] summary:hover {color:var(--o700);}
+    [data-testid="stAlert"] {border-radius:var(--radius); border:1px solid var(--line);}
+    [data-testid="stDataFrame"] {border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+    [data-testid="stSpinner"] * {color:var(--o600) !important;}
+    [data-testid="stProgress"] > div > div > div {background:var(--o600);}
+ 
+    /* ---------- Mobile ---------- */
+    @media (max-width:640px) {
+      .block-container {padding-top:1.4rem; padding-left:1rem; padding-right:1rem;}
+      .hero {padding:1.4rem 1.2rem 1.4rem 1.5rem;}
+      .hero h1 {font-size:1.7rem;}
+      div[data-testid="stForm"] {padding:1.1rem;}
     }
-    input::placeholder, textarea::placeholder {color:#8a817c !important; opacity:1 !important;}
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] *,
-    [data-testid="stSidebar"] label {color:#292524 !important;}
-    .stButton button, .stFormSubmitButton button {border-radius:7px; min-height:2.65rem; font-weight:600;}
-    .stButton button[kind="primary"], .stFormSubmitButton button, button[kind="primary"] {
-      background:#d85f2b !important; border:1px solid #d85f2b !important; color:#ffffff !important;
-    }
-    .stButton button[kind="primary"]:hover, .stFormSubmitButton button:hover {
-      background:#bd4d20 !important; border-color:#bd4d20 !important; color:#ffffff !important;
-    }
-    a {color:#d85f2b !important;}
-    h1,h2,h3 {letter-spacing:-.025em; color:#292524;}
-    [data-testid="stVerticalBlockBorderWrapper"] {border:0 !important; box-shadow:none !important;}
+    @media (prefers-reduced-motion:reduce) {* {transition:none !important;}}
     </style>
     """, unsafe_allow_html=True)
+ 
 
 def metric(label, value, note=""):
     st.markdown(f'<div class="metric-card"><div class="metric-label">{label}</div><div class="metric-value">{value}</div><div class="metric-label">{note}</div></div>', unsafe_allow_html=True)
