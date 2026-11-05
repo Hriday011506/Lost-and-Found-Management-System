@@ -1,24 +1,28 @@
-# Campus Lost & Found Management System
+# Campus Connect — Independent Lost & Found Platform
 
-A Streamlit + SQLite prototype for a university campus lost-and-found service, designed as a demonstrable pilot and a foundation for a future institutional SLCM integration proposal.
+A professional Streamlit application concept for a university campus. Students and university staff can report lost or found belongings, search listings and submit ownership claims. The service is designed to operate independently with its own accounts and database.
 
-> **Status:** Academic / institutional proposal prototype. This repository is not an official MUJ service and is not connected to SLCM, university SSO, or university databases.
+> **Project status:** Student-built prototype / proposed campus service. It is not an official university platform, is not endorsed by the university, and does not connect to SLCM or any university identity provider.
 
-## What it demonstrates
+## Product direction
 
-- Single sign-in interface with role-based student and administrator experiences
-- Student account registration
-- Create Lost and Found reports, including optional image uploads
-- Browse and filter active reports
-- Submit ownership claims with identifying details
-- Administrator claim approval / rejection and review notes
-- Basic user directory, audit trail, dashboard metrics
-- SQLite persistence and password hashing (PBKDF2-HMAC-SHA256)
-- Dark and light appearance selector
+The immediate product is a standalone website. It can be demonstrated, evaluated and potentially piloted without depending on SLCM access or integration approval. A future SLCM link or single sign-on may be considered only if the university requests and approves it; it is not a dependency for this project.
+
+## Current features
+
+- Independent registration and sign-in
+- Student / staff user experience and role-based administrator access
+- Lost and Found item reports with optional image upload
+- Search and filters for active listings
+- Ownership claim submission and status tracking
+- Department-oriented claim verification workflow (planned next implementation milestone)
+- Campus dashboard, operational metrics and audit history
+- Dark / light appearance
+- SQLite persistence and salted PBKDF2 password hashes
 
 ## Run locally
 
-Python 3.10+ is recommended.
+Python 3.10+ recommended.
 
 ```bash
 git clone https://github.com/Hriday011506/Lost-and-Found-Management-System.git
@@ -28,75 +32,57 @@ python -m venv .venv
 source .venv/bin/activate
 # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
+```
+
+Create `.streamlit/secrets.toml` locally (this file is ignored by Git):
+
+```toml
+[bootstrap]
+admin_email = "your-admin-email@example.com"
+admin_password = "Use-A-Unique-Password-Here"
+```
+
+Then start the app:
+
+```bash
 streamlit run app.py
 ```
 
-The database is created automatically as `lost_found.db` in the project directory. Uploaded images are stored under `uploads/`.
+The first run creates the administrator from the secrets above. If no bootstrap secrets are configured, public visitors can register as ordinary users but no administrator account is created. Do not commit secrets or real user data.
 
-### Initial demo administrator
+## Deploy a demonstration
 
-- Email: `admin@campus.local`
-- Password: `ChangeMe-Admin123!`
+1. Push the repository to GitHub.
+2. Create an app in Streamlit Community Cloud using this repository and `app.py`.
+3. Add the `bootstrap` values under the app's Secrets settings.
+4. Deploy and test with dummy data only.
 
-**Change the demo administrator password / remove the seeded account before exposing the app publicly.** For a real deployment, implement a proper admin bootstrap process and store secrets outside source control.
+**Persistence warning:** Streamlit Community Cloud's local filesystem is not a production persistence guarantee. The SQLite database and uploaded images in this prototype are suitable for local development / demonstration, not a multi-instance institutional service. A real campus pilot should use university-approved hosting, managed database and object storage, backups, monitoring and recovery procedures.
 
-## Deploy on Streamlit Community Cloud
+## Proposed department-led operating model
 
-1. Push this repository to GitHub.
-2. Open Streamlit Community Cloud and create an app from this repository.
-3. Set the entry point to `app.py`.
-4. Deploy.
+1. A student or staff member reports an item and selects the responsible campus department.
+2. The report appears in the campus listing.
+3. A claimant submits identifying ownership details.
+4. The responsible department reviews the claim and records a decision.
+5. The relevant university team coordinates physical handover under its approved procedure.
 
-**Important deployment limitation:** Streamlit Community Cloud's local filesystem should not be treated as a durable production database or file store. SQLite and local uploads in this prototype are intended for a demo / controlled pilot. A university deployment should use university-managed persistent database and object storage, backups, monitoring, and access controls.
+The physical custody and handover of recovered property are outside the scope of this web prototype and must be defined by the university.
 
-## Proposed workflow
+## Roadmap
 
-1. A student or staff member signs in.
-2. They submit a Lost or Found report with item details, date, location and optional image.
-3. Users search and filter open listings.
-4. A claimant submits identifying ownership details.
-5. An authorised administrator reviews the claim and approves or rejects it.
-6. An approved claim marks the item resolved; physical handover remains an offline university process.
+- [x] Independent Streamlit application foundation
+- [x] SQLite records and password hashing
+- [x] Lost / Found reporting, browsing and claims
+- [x] Dark / light theme and basic admin view
+- [ ] Department reviewer accounts and restricted claim queues
+- [ ] Campus location directory and department routing rules
+- [ ] Smart Lost / Found match suggestions
+- [ ] Email notifications and password recovery
+- [ ] Automated tests, security review and accessibility checks
+- [ ] Controlled campus pilot proposal and evaluation
+- [ ] Optional SLCM entry point / SSO assessment, only if approved
 
-## Proposed data model
+## Institutional readiness
 
-- **User**: identity, email, password hash, role
-- **Item**: reporter, report type, item details, location, date, image reference, status
-- **Claim**: item, claimant, ownership evidence, status, administrator note
-- **AuditLog**: actor, action, record reference / detail, timestamp
-
-## SLCM integration vision (future phase — not implemented)
-
-The prototype is intentionally separated from SLCM. A future institutional integration should be designed with MUJ's IT / SLCM owners and security team. A possible target architecture is:
-
-- **Identity:** SLCM / university-approved identity provider using an approved SSO protocol (e.g., OIDC or SAML); do not collect or store SLCM passwords in this app.
-- **Authorisation:** map verified institutional identity attributes to student / staff / authorised administrator roles; administrator privileges require explicit institutional approval.
-- **Integration:** publish an approved link or embedded entry point in SLCM, with documented API contracts if data exchange is required.
-- **Hosting:** university-approved infrastructure, central logging, monitoring, backups, vulnerability management and recovery procedures.
-- **Data governance:** approved purposes, retention periods, access rules, privacy notice, incident response and ownership of operational data.
-- **Operations:** named service owner, support route, moderation / handover SOP, escalation procedure and service-level expectations.
-
-No SLCM API, endpoint, credential, integration permission or institutional approval is assumed by this project.
-
-## Pilot proposal outline
-
-A safe way to evaluate the concept is a limited, time-bound pilot after university review:
-
-1. **Discovery:** confirm the responsible department, item handover process, user groups and current pain points.
-2. **Policy and privacy review:** approve data fields, image guidance, retention / deletion, moderation and escalation.
-3. **Controlled pilot:** use a small campus cohort and non-sensitive test data in an approved hosting environment.
-4. **Evaluation:** measure report completion, time to find a relevant listing, claims reviewed, resolved reports, duplicate / misleading reports and user feedback.
-5. **Decision gate:** assess security, operational workload, adoption and value before considering SLCM integration.
-
-## Known prototype limitations / next steps
-
-- Email ownership and institutional identity are not verified.
-- The demo admin bootstrap is suitable only for local demonstration.
-- No email / push notifications, SLCM integration, QR / barcode support or physical handover workflow.
-- No production-grade moderation, rate limiting, malware scanning or image redaction.
-- Local SQLite and upload storage are not a multi-instance production architecture.
-- Add password reset, account verification, formal admin provisioning and automated tests before a broader pilot.
-
-## Academic context
-
-The feature scope follows the supplied Software Requirements Specification for a campus lost-and-found system: user registration and login, lost / found reports, searching and filtering, ownership claims, and administrator management. SLCM connectivity is explicitly treated as a future enhancement rather than a Version 1.0 capability.
+Before any live campus rollout, the university would need to approve a service owner, hosting, account verification, role assignments, privacy notice, data retention, moderation, claim-verification procedure, physical handover process, incident response and support ownership. This repository is a prototype and does not claim those approvals have been obtained.
