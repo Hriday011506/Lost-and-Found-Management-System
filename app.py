@@ -460,7 +460,6 @@ inject_css()
 with st.sidebar:
     render_brand_logo(width=250)
     st.divider()
-    st.divider()
     if st.session_state.user:
         u = st.session_state.user
         st.markdown(f"**{u['name']}**")
