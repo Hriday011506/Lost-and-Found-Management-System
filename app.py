@@ -648,7 +648,7 @@ elif page == "Browse items":
 
 elif page == "Report an item":
     st.markdown('<div class="hero"><h1>Make a report</h1><p>Share clear details so the campus community can help.</p></div>', unsafe_allow_html=True)
-    with st.form("report_form",clear_on_submit=True):
+    with st.form("report_form",clear_on_submit=False):
         a,b=st.columns(2)
         with a:
             typ=st.radio("I want to report",["Lost","Found"],horizontal=True)
