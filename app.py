@@ -408,6 +408,8 @@ def inject_css():
     .login-panel-intro {color:var(--muted); margin:0 0 .9rem; font-size:.88rem;}
     .login-eyebrow {font-size:.7rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--o700); margin-bottom:.55rem;}
     .login-footnote {font-size:.74rem; color:var(--muted); text-align:center; margin-top:.85rem;}
+    .stApp:has(.login-shell) .login-footnote {color:#FFFFFF !important; -webkit-text-fill-color:#FFFFFF !important; font-weight:700 !important; text-shadow:0 2px 5px rgba(35,20,10,.85) !important;}
+    .stApp:has(.login-shell) .login-eyebrow {color:#FFFFFF !important; -webkit-text-fill-color:#FFFFFF !important; text-shadow:0 2px 5px rgba(35,20,10,.8) !important;}
     .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stForm"] {
       border:0 !important; padding:.55rem 0 0 !important; box-shadow:none !important; background:transparent !important;
     }
