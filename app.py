@@ -9,7 +9,6 @@ from html import escape
 import hashlib
 import hmac
 import secrets
-import base64
 
 import pandas as pd
 import streamlit as st
@@ -91,14 +90,6 @@ def rows(query, args=()):
 def one(query, args=()):
     with get_conn() as c:
         return c.execute(query, args).fetchone()
-
-
-LOGO_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1200 340\"><g fill=\"none\" stroke=\"#333333\" stroke-width=\"7\" stroke-linecap=\"round\"><path d=\"M185 285 C75 260 35 160 85 70 M185 285 C295 260 335 160 285 70\"/><path d=\"M82 85 l-25 -12 m31 36 l-29 -8 m36 34 l-30 -4 m38 31 l-29 1 m37 28 l-26 7 m37 22 l-22 12 M288 85 l25 -12 m-31 36 l29 -8 m-36 34 l30 -4 m-38 31 l29 1 m-37 28 l26 7 m-37 22 l22 12\"/></g><g fill=\"#D9541E\"><ellipse cx=\"185\" cy=\"55\" rx=\"28\" ry=\"38\" transform=\"rotate(-28 185 55)\"/><path d=\"M105 118 Q185 93 265 118 L250 151 Q241 160 229 160 L229 230 Q229 250 214 250 Q199 250 199 230 L199 174 L184 174 L184 230 Q184 250 169 250 Q154 250 154 230 L154 174 L139 174 L139 230 Q139 250 124 250 Q109 250 109 230 L109 160 Q96 157 95 144 Z\"/></g><text x=\"185\" y=\"318\" text-anchor=\"middle\" font-family=\"Georgia,serif\" font-size=\"23\" fill=\"#333333\" letter-spacing=\"2\">INSPIRED BY LIFE</text><path d=\"M365 35 V305\" stroke=\"#D9541E\" stroke-width=\"3\"/><g fill=\"#26201C\" font-family=\"Georgia,Times New Roman,serif\"><text x=\"405\" y=\"130\" font-size=\"76\">MANIPAL UNIVERSITY</text><text x=\"405\" y=\"218\" font-size=\"82\" letter-spacing=\"2\">JAIPUR</text></g><path d=\"M405 242 H1135\" stroke=\"#D9541E\" stroke-width=\"5\"/><text x=\"405\" y=\"315\" font-family=\"Georgia,Times New Roman,serif\" font-size=\"64\" letter-spacing=\"10\" fill=\"#26201C\">LOST AND FOUND</text><g transform=\"translate(1080 258)\" fill=\"none\" stroke=\"#D9541E\" stroke-width=\"7\" stroke-linejoin=\"round\"><path d=\"M0 25 L55 0 L110 25 L55 52 Z M0 25 V88 L55 116 V52 M110 25 V88 L55 116\"/><circle cx=\"102\" cy=\"72\" r=\"27\"/><path d=\"M122 92 L148 118\"/></g></svg>"
-
-def render_brand_logo(width=260, login=False):
-    logo_data = base64.b64encode(LOGO_SVG.encode('utf-8')).decode('ascii')
-    css_class = 'brand-logo brand-logo-login' if login else 'brand-logo'
-    st.markdown(f'<div class="{css_class}" style="max-width:{width}px"><img alt="Manipal University Jaipur Lost and Found" src="data:image/svg+xml;base64,{logo_data}"></div>', unsafe_allow_html=True)
 
 def inject_css():
     st.markdown("""
@@ -328,9 +319,6 @@ def inject_css():
     .stApp:has(.login-shell) .block-container {max-width:none !important; padding:2.5rem 0 2rem 10.2% !important;}
     .stApp:has(.login-shell) [data-testid="stHorizontalBlock"] {align-items:flex-start !important;}
     .login-shell {max-width:430px; margin:0 0 1.1rem 0; position:relative; z-index:2;}
-    .brand-logo {width:100%; margin:0 auto 1rem; padding:.35rem; background:#fff; border:1px solid #F0E8E2; border-radius:12px; overflow:hidden;}
-    .brand-logo img {display:block; width:100%; height:auto;}
-    .brand-logo-login {max-width:520px; padding:.55rem .7rem; margin:0 0 1rem 0; box-shadow:0 8px 28px rgba(0,0,0,.16);}
     .login-brand {display:flex; align-items:center; gap:.8rem; margin:0 0 1rem .1rem; color:#fff;
       text-shadow:0 1px 8px rgba(0,0,0,.35);}
     .login-brand-mark {width:42px; height:42px; display:grid; place-items:center; border-radius:12px;
@@ -458,7 +446,8 @@ if "user" not in st.session_state:
 inject_css()
 
 with st.sidebar:
-    render_brand_logo(width=250)
+    st.markdown("## 🔎 MUJ Lost & Found")
+    st.caption("MANIPAL UNIVERSITY JAIPUR")
     st.divider()
     if st.session_state.user:
         u = st.session_state.user
@@ -478,7 +467,7 @@ if not st.session_state.user:
 
     left, empty_space = st.columns([0.43, 0.57], gap="small")
     with left:
-        render_brand_logo(width=500, login=True)
+        st.markdown('<div class="login-shell"><div class="login-brand"><div class="login-brand-mark">⌕</div><div><div class="login-brand-name">MUJ Lost &amp; Found</div><div class="login-brand-sub">MANIPAL UNIVERSITY JAIPUR</div></div></div></div>', unsafe_allow_html=True)
         with st.container(border=True):
             st.markdown('<div class="login-eyebrow">WELCOME TO MUJ LOST &amp; FOUND</div><h2>Find what matters. Return what belongs.</h2><p class="login-panel-intro">Choose your university account type to continue.</p>', unsafe_allow_html=True)
 
