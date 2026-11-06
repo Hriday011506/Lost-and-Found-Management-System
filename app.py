@@ -72,6 +72,19 @@ def init_db():
         if "identification_mark" not in item_columns:
             c.execute("ALTER TABLE items ADD COLUMN identification_mark TEXT DEFAULT ''")
 
+        # Migrate older audit_log tables created by previous app versions.
+        # CREATE TABLE IF NOT EXISTS does not add columns to an existing table.
+        audit_columns = {row[1] for row in c.execute("PRAGMA table_info(audit_log)").fetchall()}
+        audit_migrations = {
+            "actor_id": "INTEGER",
+            "action": "TEXT NOT NULL DEFAULT ''",
+            "detail": "TEXT NOT NULL DEFAULT ''",
+            "created_at": "TEXT NOT NULL DEFAULT ''",
+        }
+        for column, definition in audit_migrations.items():
+            if column not in audit_columns:
+                c.execute(f"ALTER TABLE audit_log ADD COLUMN {column} {definition}")
+
 def hash_password(password: str, salt: str) -> str:
     return hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 240000).hex()
 
