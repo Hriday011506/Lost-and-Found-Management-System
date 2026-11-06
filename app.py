@@ -470,7 +470,7 @@ if not st.session_state.user:
     left, empty_space = st.columns([0.43, 0.57], gap="small")
     with left:
         st.markdown('<div class="login-shell"></div>', unsafe_allow_html=True)
-        st.image("static/muj_lost_found_logo.png", width=430) unsafe_allow_html=True)
+        st.image("static/muj_lost_found_logo.png", width=430)
         with st.container(border=True):
             st.markdown('<div class="login-eyebrow">WELCOME TO MUJ LOST &amp; FOUND</div><h2>Find what matters. Return what belongs.</h2><p class="login-panel-intro">Choose your university account type to continue.</p>', unsafe_allow_html=True)
 
