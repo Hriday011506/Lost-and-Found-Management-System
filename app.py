@@ -319,6 +319,8 @@ def inject_css():
     .stApp:has(.login-shell) .block-container {max-width:none !important; padding:2.5rem 0 2rem 10.2% !important;}
     .stApp:has(.login-shell) [data-testid="stHorizontalBlock"] {align-items:flex-start !important;}
     .login-shell {max-width:430px; margin:0 0 1.1rem 0; position:relative; z-index:2;}
+    .login-logo {width:100%; max-width:430px; margin:0 0 1rem 0; background:#fff; border-radius:8px; overflow:hidden;}
+    .login-logo svg {display:block; width:100%; height:auto;}
     .login-brand {display:flex; align-items:center; gap:.8rem; margin:0 0 1rem .1rem; color:#fff;
       text-shadow:0 1px 8px rgba(0,0,0,.35);}
     .login-brand-mark {width:42px; height:42px; display:grid; place-items:center; border-radius:12px;
@@ -467,7 +469,7 @@ if not st.session_state.user:
 
     left, empty_space = st.columns([0.43, 0.57], gap="small")
     with left:
-        st.markdown('<div class="login-shell"><div class="login-brand"><div class="login-brand-mark">⌕</div><div><div class="login-brand-name">MUJ Lost &amp; Found</div><div class="login-brand-sub">MANIPAL UNIVERSITY JAIPUR</div></div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="login-shell"><div class="login-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" role="img" aria-label="Manipal University Jaipur Lost and Found"><rect width="1200" height="340" rx="12" fill="#ffffff"/><g fill="none" stroke="#34302d" stroke-width="7" stroke-linecap="round"><path d="M170 278 C60 250 35 145 80 66 M170 278 C280 250 305 145 260 66"/><path d="M80 83 l-25 -12 m32 36 l-29 -8 m37 34 l-30 -4 m39 31 l-29 1 m38 28 l-26 7 m36 22 l-22 12 M260 83 l25 -12 m-32 36 l29 -8 m-37 34 l30 -4 m-39 31 l29 1 m-38 28 l26 7 m-36 22 l22 12"/></g><g fill="#D9541E"><ellipse cx="170" cy="54" rx="27" ry="36" transform="rotate(-28 170 54)"/><path d="M92 116 Q170 92 248 116 L234 149 Q225 157 214 158 L214 224 Q214 244 199 244 Q184 244 184 224 L184 173 L169 173 L169 224 Q169 244 154 244 Q139 244 139 224 L139 173 L124 173 L124 224 Q124 244 109 244 Q94 244 94 224 L94 158 Q82 154 82 141 Z"/></g><text x="170" y="312" text-anchor="middle" font-family="Georgia,serif" font-size="21" fill="#34302d">INSPIRED BY LIFE</text><path d="M330 30 V305" stroke="#D9541E" stroke-width="3"/><g fill="#26201C" font-family="Georgia,Times New Roman,serif"><text x="370" y="120" font-size="75">MANIPAL UNIVERSITY</text><text x="370" y="205" font-size="82" letter-spacing="2">JAIPUR</text></g><path d="M370 230 H1110" stroke="#D9541E" stroke-width="5"/><text x="370" y="305" font-family="Georgia,Times New Roman,serif" font-size="62" letter-spacing="8" fill="#26201C">LOST AND FOUND</text><g transform="translate(1060 252)" fill="none" stroke="#D9541E" stroke-width="7" stroke-linejoin="round"><path d="M0 22 L48 0 L96 22 L48 45 Z M0 22 V76 L48 100 V45 M96 22 V76 L48 100"/><circle cx="90" cy="63" r="23"/><path d="M107 80 L130 103"/></g></svg></div></div>', unsafe_allow_html=True)
         with st.container(border=True):
             st.markdown('<div class="login-eyebrow">WELCOME TO MUJ LOST &amp; FOUND</div><h2>Find what matters. Return what belongs.</h2><p class="login-panel-intro">Choose your university account type to continue.</p>', unsafe_allow_html=True)
 
