@@ -319,8 +319,8 @@ def inject_css():
     .stApp:has(.login-shell) .block-container {max-width:none !important; padding:2.5rem 0 2rem 10.2% !important;}
     .stApp:has(.login-shell) [data-testid="stHorizontalBlock"] {align-items:flex-start !important;}
     .login-shell {max-width:430px; margin:0 0 1.1rem 0; position:relative; z-index:2;}
-    .login-logo-image {width:min(100%,560px); margin:0 0 1.15rem 0; padding:12px 16px; background:#fff; border-radius:8px; box-sizing:border-box; overflow:hidden;}
-    .login-logo-image img {display:block; width:100%; height:auto; object-fit:contain;}
+    .login-logo-image {width:min(100%,560px); margin:0 0 1.15rem 0; padding:0; background:transparent !important; border:0 !important; border-radius:0; box-sizing:border-box; overflow:visible;}
+    .login-logo-image img {display:block; width:100%; height:auto; max-height:170px; object-fit:contain; background:transparent !important;}
     .login-logo {width:100%; max-width:430px; margin:0 0 1rem 0; background:#fff; border-radius:8px; overflow:hidden;}
     .login-logo svg {display:block; width:100%; height:auto;}
     .login-brand {display:flex; align-items:center; gap:.8rem; margin:0 0 1rem .1rem; color:#fff;
@@ -340,13 +340,39 @@ def inject_css():
       border-color:#fff !important; box-shadow:0 18px 55px rgba(45,25,12,.22) !important;
     }
     /* Keep the complete login choice and validation area readable over the photo. */
-    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"]:has(.login-eyebrow):has([data-testid="stButton"]) {
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"] {
       background:rgba(255,255,255,.98) !important;
-      border:1px solid #fff !important;
-      border-radius:22px !important;
+      border:1px solid rgba(255,255,255,.96) !important;
+      border-radius:18px !important;
+      color:#26201C !important;
+      box-shadow:0 12px 38px rgba(45,25,12,.22) !important;
+    }
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"]:has(.login-eyebrow) {
       padding:1.35rem 1.45rem 1.15rem !important;
-      box-shadow:0 18px 55px rgba(45,25,12,.24) !important;
       max-width:570px !important;
+    }
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"] :is(h1,h2,h3,p,label,span,div) {
+      color:#26201C;
+    }
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMarkdown"] p,
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"] .login-panel-intro,
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"] .login-footnote {
+      color:#51463F !important;
+      -webkit-text-fill-color:#51463F !important;
+    }
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"] .login-eyebrow,
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"] .selected-login-label {
+      color:#A83F13 !important;
+      -webkit-text-fill-color:#A83F13 !important;
+    }
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"] input,
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"] textarea {
+      color:#26201C !important;
+      -webkit-text-fill-color:#26201C !important;
+      background:#fff !important;
+    }
+    .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stTabs"] [role="tab"] {
+      color:#51463F !important;
     }
     .stApp:has(.login-shell) [data-testid="stVerticalBlockBorderWrapper"]:has(.login-eyebrow):has([data-testid="stButton"]) > div {
       background:transparent !important;
