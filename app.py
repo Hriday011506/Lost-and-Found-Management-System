@@ -654,7 +654,14 @@ elif page == "Browse items":
                                 else:
                                     c.execute("INSERT INTO claims(item_id,claimant_id,ownership_details,created_at) VALUES(?,?,?,?)",
                                               (r["id"],uid,details.strip(),datetime.now().isoformat(timespec="seconds")))
-                                    log_action(uid,"CLAIM_SUBMITTED",f"Item #{r['id']}")
+                                    # Write the audit entry on the same connection.
+                                    # A second SQLite writer can raise "database is locked"
+                                    # while the claim transaction is still active.
+                                    c.execute(
+                                        "INSERT INTO audit_log(actor_id,action,detail,created_at) VALUES(?,?,?,?)",
+                                        (uid, "CLAIM_SUBMITTED", f"Item #{r['id']}",
+                                         datetime.now().isoformat(timespec="seconds"))
+                                    )
                                     st.success("Claim submitted for administrator review.")
                                     st.session_state[f"claim_item_{r['id']}"]=False
                                     st.rerun()
