@@ -319,6 +319,8 @@ def inject_css():
     .stApp:has(.login-shell) .block-container {max-width:none !important; padding:2.5rem 0 2rem 10.2% !important;}
     .stApp:has(.login-shell) [data-testid="stHorizontalBlock"] {align-items:flex-start !important;}
     .login-shell {max-width:430px; margin:0 0 1.1rem 0; position:relative; z-index:2;}
+    .login-logo-image {width:min(100%,560px); margin:0 0 1.15rem 0; padding:12px 16px; background:#fff; border-radius:8px; box-sizing:border-box; overflow:hidden;}
+    .login-logo-image img {display:block; width:100%; height:auto; object-fit:contain;}
     .login-logo {width:100%; max-width:430px; margin:0 0 1rem 0; background:#fff; border-radius:8px; overflow:hidden;}
     .login-logo svg {display:block; width:100%; height:auto;}
     .login-brand {display:flex; align-items:center; gap:.8rem; margin:0 0 1rem .1rem; color:#fff;
@@ -470,7 +472,7 @@ if not st.session_state.user:
     left, empty_space = st.columns([0.43, 0.57], gap="small")
     with left:
         st.markdown('<div class="login-shell"></div>', unsafe_allow_html=True)
-        st.image("static/muj_lost_found_logo.png", width=430)
+        st.markdown('<div class="login-logo-image"><img src="https://raw.githubusercontent.com/Hriday011506/Lost-and-Found-Management-System/main/static/muj_lost_found_logo.png" alt="MUJ Lost and Found logo"></div>', unsafe_allow_html=True)
         with st.container(border=True):
             st.markdown('<div class="login-eyebrow">WELCOME TO MUJ LOST &amp; FOUND</div><h2>Find what matters. Return what belongs.</h2><p class="login-panel-intro">Choose your university account type to continue.</p>', unsafe_allow_html=True)
 
