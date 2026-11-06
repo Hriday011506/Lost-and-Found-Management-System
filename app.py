@@ -646,25 +646,31 @@ elif page == "Browse items":
                         if len(details.strip())<20:
                             st.error("Please provide at least 20 characters of useful identifying detail.")
                         else:
-                            with get_conn() as c:
-                                existing=c.execute("SELECT id FROM claims WHERE item_id=? AND claimant_id=?",(r["id"],uid)).fetchone()
-                                if existing:
-                                    st.info("You have already submitted a claim for this item.")
-                                    st.session_state[f"claim_item_{r['id']}"]=False
-                                else:
-                                    c.execute("INSERT INTO claims(item_id,claimant_id,ownership_details,created_at) VALUES(?,?,?,?)",
-                                              (r["id"],uid,details.strip(),datetime.now().isoformat(timespec="seconds")))
-                                    # Write the audit entry on the same connection.
-                                    # A second SQLite writer can raise "database is locked"
-                                    # while the claim transaction is still active.
-                                    c.execute(
-                                        "INSERT INTO audit_log(actor_id,action,detail,created_at) VALUES(?,?,?,?)",
-                                        (uid, "CLAIM_SUBMITTED", f"Item #{r['id']}",
-                                         datetime.now().isoformat(timespec="seconds"))
-                                    )
-                                    st.success("Claim submitted for administrator review.")
-                                    st.session_state[f"claim_item_{r['id']}"]=False
-                                    st.rerun()
+                            claim_created = False
+                            try:
+                                with get_conn() as c:
+                                    existing=c.execute("SELECT id FROM claims WHERE item_id=? AND claimant_id=?",(r["id"],uid)).fetchone()
+                                    if existing:
+                                        st.info("You have already submitted a claim for this item.")
+                                        st.session_state[f"claim_item_{r['id']}"]=False
+                                    else:
+                                        now=datetime.now().isoformat(timespec="seconds")
+                                        c.execute("INSERT INTO claims(item_id,claimant_id,ownership_details,created_at) VALUES(?,?,?,?)",
+                                                  (r["id"],uid,details.strip(),now))
+                                        c.execute(
+                                            "INSERT INTO audit_log(actor_id,action,detail,created_at) VALUES(?,?,?,?)",
+                                            (uid, "CLAIM_SUBMITTED", f"Item #{r['id']}", now)
+                                        )
+                                        # Commit before rerun; st.rerun() raises an exception and
+                                        # must never run inside the SQLite transaction context.
+                                        c.commit()
+                                        claim_created = True
+                            except sqlite3.Error as exc:
+                                st.error(f"Unable to submit your claim: {exc}. Please try again.")
+                            if claim_created:
+                                st.session_state[f"claim_item_{r['id']}"]=False
+                                st.success("Claim submitted successfully. It is now pending administrator review.")
+                                st.rerun()
 
 elif page == "Report an item":
     st.markdown('<div class="hero"><h1>Make a report</h1><p>Share clear details so the campus community can help.</p></div>', unsafe_allow_html=True)
