@@ -304,7 +304,7 @@ def inject_css():
  
     /* ---------- Full-screen campus login ---------- */
     .stApp:has(.login-shell) [data-testid="stSidebar"] {display:none !important;}
-    .stApp:has(.login-shell) [data-testid="stHeader"] {background:transparent !important; border:0 !important;}
+    .stApp:has(.login-shell) [data-testid="stHeader"] {background:transparent !important; border:0 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; filter:none !important;}
     .stApp:has(.login-shell) [data-testid="stToolbar"] {display:none !important;}
     .stApp:has(.login-shell) [data-testid="stAppViewContainer"] {background:transparent !important;}
     .stApp:has(.login-shell) [data-testid="stAppViewContainer"]::before {
